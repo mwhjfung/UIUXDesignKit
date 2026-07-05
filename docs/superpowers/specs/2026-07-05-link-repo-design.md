@@ -1,0 +1,157 @@
+# /link-repo — connect the kit to an existing product codebase
+
+**Status: DRAFT — awaiting user review.** Written from the recommended
+options while the user was away; the four assumptions below need explicit
+confirmation before implementation planning.
+
+## Problem
+
+Today, pointing the kit at an organisation's design system is manual: copy
+the closest stack template, swap dependencies, run `/scaffold-manifest`, sit
+through `/curate-manifest`, register knowledge sources, and remember the
+product repo's path every time you run `/handoff`. A new user shouldn't have
+to do archaeology on their own codebase before the kit is useful.
+
+`/link-repo <path>` makes the product repo the input: the kit reads it,
+builds a matching stack template + manifest automatically, learns the
+product's conventions from its real screens, and remembers the repo as the
+default handoff target.
+
+## Assumptions to confirm
+
+1. **Link depth = design system + conventions.** The linked repo's screens
+   are *mined* to seed `patterns.md` / `rules.md`, not imported as
+   prototypes. (Screen→prototype import is a listed v2 extension.)
+2. **Sync is explicit.** The link records path + commit SHA; `/sync-manifest`
+   learns to refresh from the linked repo. No file watching.
+3. **The linked repo becomes the default `/handoff` target.**
+4. **Input is a local clone path.** A GitHub URL is accepted but simply
+   cloned to a sibling directory first.
+
+## Approaches considered
+
+- **A. Skill-only** — the AI inspects the repo ad hoc and hand-writes a
+  template. Zero new engine code, maximally flexible — but non-deterministic,
+  untestable, and slow every single time.
+- **B. TS engine + thin skill (chosen)** — detection, template generation,
+  and link metadata live in `pdk-core` under vitest; the skill layer handles
+  only judgement calls (ambiguity, convention mining, curation confirmation).
+  Matches the kit's standing decision that "skills are thin wrappers over
+  vitest-covered TS."
+- **C. Full import incl. screens-as-prototypes** — biggest head start, but
+  extracting screens from a real app (routing, state, data wiring) is
+  fragile and framework-entangled. Deferred; the design leaves room for it.
+
+## User experience
+
+```
+/link-repo ~/work/acme-app
+```
+
+1. Kit inspects the repo, reports what it found: *"React 18 + vendored
+   shadcn-style components (src/components/ui, 41 components), tokens in
+   src/styles/globals.css, lucide-react icons. Link as stack 'acme-app'?"*
+2. On confirm, it generates `stack-templates/acme-app/`, scans the manifest,
+   and mines conventions from the repo's screens into draft
+   `patterns.md`/`rules.md`.
+3. A **shortened curation pass**: instead of the ~30-minute blank-page
+   interview, the user reviews mined drafts — confirm / correct / delete.
+4. Done: the catalogue's New-prototype dialog now offers the linked stack;
+   `/handoff` defaults to the linked repo.
+
+If detection is ambiguous (monorepo with several apps, multiple candidate
+DS packages, no recognisable system), the skill asks instead of guessing.
+
+## Architecture
+
+Three layers, mirroring the kit's existing seams:
+
+### 1. `pdk-core/src/manifest/link.ts` (new, tested)
+
+- `inspectRepo(repoPath)` → `RepoReport`:
+  - workspace-aware package.json discovery (root + workspaces/pnpm-workspace)
+  - framework detection: react/vue + version, per candidate app
+  - design-system detection, reusing the existing scanner taxonomy:
+    - **local-cva** — a vendored `components/ui`-style directory whose files
+      use CVA (same signal `scanLocalUi` already keys on)
+    - **package-types** — DS packages in dependencies (`@mui/*`,
+      `@atlaskit/*`, org-scoped `@<org>/design-system`-shaped packages with
+      `.d.ts`)
+  - token-file candidates (CSS with `:root` / `@theme` blocks), icon
+    packages, font packages
+- `generateTemplate(report, opts)` → writes `stack-templates/<name>/`:
+  - chassis = closest built-in template (react-shadcn or vue-shadcn) for
+    vite config, tsconfig, prelude script tag, `@pdk/core` wiring,
+    `src/services/` seam
+  - DS dependencies mirrored **at the linked repo's exact versions**
+  - vendored `components/ui` + token CSS copied in (local-cva case)
+  - `pdk.json` gains a `designSystem` block (existing scanner contract) plus:
+    ```json
+    "linkedRepo": {
+      "path": "/abs/path/to/acme-app",
+      "commit": "<sha at link time>",
+      "linkedAt": "2026-07-05",
+      "appDir": "apps/web"        // monorepo case; "." otherwise
+    }
+    ```
+- `syncLink(templateDir)` — used by `/sync-manifest`: compares the linked
+  repo's current commit to the recorded one; re-copies vendored ui + tokens,
+  re-pins versions, then delegates to the existing manifest sync (which
+  already diffs and flags stale curated prose).
+
+### 2. `.claude/skills/link-repo/SKILL.md` (new)
+
+Orchestrates: run inspection → present findings → confirm/disambiguate →
+generate template → `npm install` in template → run `scaffoldManifest` →
+**convention mining** → shortened curation confirmation → register the repo
+in `docs/knowledge-sources.md` (`type: path`, `trust: additive`) → report.
+
+Convention mining (AI judgement, deliberately not TS): read a sample of the
+repo's screens/routes; draft `patterns.md` (recurring layout wrappers,
+component co-occurrence, empty/loading/error handling) and `rules.md`
+(observed do/don'ts, spacing and variant habits) and `voice.md` (tone of
+real UI strings). Drafts carry a `<!-- pdk:mined -->` marker until the user
+confirms them, at which point the marker is removed. `isStubMd()` in
+`pdk-core/src/manifest/read.ts` is extended to recognise `pdk:mined`
+alongside `pdk:stub`, so unconfirmed drafts read as not-yet-curated
+everywhere the kit already checks.
+
+### 3. Touch-ups to existing pieces
+
+- `/handoff`: when the prototype's stack has `linkedRepo`, default the
+  target to `linkedRepo.path` (+ suggested subdirectory) instead of asking.
+- `/sync-manifest`: call `syncLink()` first when the stack has `linkedRepo`.
+- Catalogue: no changes needed — generated templates appear automatically in
+  `GET /__api/stacks`.
+- README/CLAUDE.md: document the linked-repo flow as the recommended path;
+  the manual copy-a-template flow remains for design systems that live
+  nowhere (greenfield).
+
+## Error handling
+
+- **No recognisable design system** → report what was looked for, offer the
+  manual flow (`designSystem` block authored by hand), don't scaffold junk.
+- **Monorepo, multiple apps/DS candidates** → list candidates, ask.
+- **Framework unsupported** (not React/Vue) → stop with a clear message;
+  don't attempt a chassis that can't render the components.
+- **Linked repo moved/deleted at sync or handoff time** → surface the stored
+  path and ask for the new one; update `linkedRepo.path`.
+- **Vendored-ui copy conflicts at handoff** → already handled by /handoff's
+  divergence notes (kit copies are skipped when the target has its own).
+
+## Testing
+
+- Unit: `inspectRepo` against three fixture repos (vendored-shadcn app,
+  packaged-DS app, monorepo with two apps); `generateTemplate` output shape
+  (pdk.json contract, dependency pinning, chassis files present);
+  `syncLink` commit-drift behaviour.
+- Smoke: link a scratch repo end-to-end → template builds, manifest scans,
+  a prototype scaffolds from the new stack and serves `/__pdk/manifest`.
+
+## Out of scope (v2 candidates)
+
+- Importing existing screens as remixable prototypes (Approach C).
+- Live watching of the linked repo.
+- Multi-repo links (one kit ↔ several products) — the data model
+  (`linkedRepo` per stack template) already permits it; the skill just
+  handles one at a time.
