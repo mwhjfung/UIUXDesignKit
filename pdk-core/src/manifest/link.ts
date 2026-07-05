@@ -14,6 +14,7 @@
 import { execSync } from 'node:child_process'
 import { cpSync, existsSync, mkdirSync, readFileSync, readdirSync, rmSync, statSync, writeFileSync } from 'node:fs'
 import { basename, join, relative, resolve } from 'node:path'
+import { pathToFileURL } from 'node:url'
 import type { DesignSystemConfig } from './scaffold.js'
 
 export type RepoRole = 'product' | 'design-system'
@@ -434,4 +435,69 @@ export function syncLink(templateDir: string, opts: { dryRun?: boolean } = {}): 
     entries.push({ repo, currentCommit, drifted, refreshed, missing: false })
   }
   return entries
+}
+
+// ---- CLI ----
+const invokedDirectly =
+  process.argv[1] && import.meta.url === pathToFileURL(resolve(process.argv[1])).href
+if (invokedDirectly) {
+  const [cmd, ...rest] = process.argv.slice(2)
+  const flag = (name: string): string | undefined => {
+    const i = rest.indexOf(`--${name}`)
+    return i !== -1 ? rest[i + 1] : undefined
+  }
+  const positional = rest.filter((a, i) => !a.startsWith('--') && !rest[i - 1]?.startsWith('--'))
+
+  try {
+    if (cmd === 'inspect') {
+      const repoPath = positional[0]
+      if (!repoPath) throw new Error('Usage: link.ts inspect <repoPath>')
+      console.log(JSON.stringify(inspectRepo(repoPath), null, 2))
+    } else if (cmd === 'attach') {
+      const stack = positional[0]
+      const repoPath = flag('repo')
+      const role = flag('role') as RepoRole | undefined
+      if (!stack || !repoPath || (role !== 'product' && role !== 'design-system')) {
+        throw new Error(
+          'Usage: link.ts attach <stack> --repo <path> --role <product|design-system> [--app-dir <rel>] [--root <kitRoot>]',
+        )
+      }
+      const kitRoot = resolve(flag('root') ?? process.cwd())
+      const report = inspectRepo(repoPath)
+      const appDir = flag('app-dir') ?? report.candidates[0].dir
+      const candidate = report.candidates.find((c) => c.dir === appDir)
+      if (!candidate) {
+        throw new Error(
+          `No candidate at '${appDir}'. Candidates: ${report.candidates.map((c) => c.dir).join(', ')}`,
+        )
+      }
+      const templateDir = join(kitRoot, 'stack-templates', stack)
+      let created = false
+      let warnings: string[] = []
+      if (!existsSync(templateDir)) {
+        const result = generateTemplate({
+          kitRoot,
+          stackName: stack,
+          inputs: [{ report, candidate, role }],
+        })
+        created = true
+        warnings = result.warnings
+      }
+      attachRepo(templateDir, {
+        role,
+        path: report.repoPath,
+        commit: gitHead(report.repoPath),
+        linkedAt: new Date().toISOString(),
+        appDir: candidate.dir,
+        vendoredUiDir: candidate.vendoredUiDir,
+        tokenFile: candidate.tokenFiles[0] ?? null,
+      })
+      console.log(JSON.stringify({ templateDir, created, warnings }, null, 2))
+    } else {
+      throw new Error(`Unknown command '${cmd ?? ''}'. Commands: inspect, attach`)
+    }
+  } catch (e) {
+    console.error((e as Error).message)
+    process.exit(1)
+  }
 }
