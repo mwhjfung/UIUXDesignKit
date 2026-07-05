@@ -19,6 +19,7 @@ stack-templates/      One folder per stack (react-shadcn ★reference, vue-shadc
 prototypes/           Standalone Vite apps copied from stack templates. Each has
                       pdk.json (identity: slug, stack, port, lineage).
 tooling/              pdk-prelude.js — script tag prototypes include to load the toolbar
+.pdk/                 Per-device order-ticket queue (git-ignored) — see the orders skill
 areas/                Research workstreams (brief + research per area)
 docs/                 Working rules, decisions log, knowledge-source registry
 ```
@@ -40,6 +41,10 @@ repo (stack templates record it in pdk.json `linkedRepos`).
 `/import-screen <name>` starts a prototype from a linked product repo's
 real screen. Linking is read-only; prototypes stay mock-only — real
 endpoints are connected by developers after /handoff, never in the kit.
+
+Catalogue buttons file order tickets (import a screen, hand off) into
+`.pdk/requests.json`; process them with the `orders` skill. Status flips
+(ready-for-dev etc.) are direct pdk.json updates via the catalogue.
 
 ## The manifest is the source of truth
 
