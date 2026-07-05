@@ -4,6 +4,7 @@ import { tmpdir } from 'node:os'
 import { describe, expect, it, afterEach } from 'vitest'
 import { inspectRepo, generateTemplate } from '../../src/manifest/link.js'
 import { attachRepo, linkedRepos, syncLink } from '../../src/manifest/link.js'
+import { layerChassisTokenBlocks } from '../../src/manifest/link.js'
 
 const FIXTURES = join(__dirname, '..', 'fixtures', 'link')
 
@@ -43,6 +44,18 @@ describe('inspectRepo', () => {
 
   it('throws a clear error for a path with no package.json anywhere', () => {
     expect(() => inspectRepo(join(FIXTURES, 'nope'))).toThrow(/package\.json/)
+  })
+})
+
+describe('layerChassisTokenBlocks', () => {
+  it('wraps top-level :root/.dark blocks in @layer pdk-defaults, leaving @import/@theme untouched', () => {
+    const input =
+      '@import "tailwindcss";\n:root { --a: 1; }\n.dark { --a: 2; }\n@theme inline { --b: var(--a); }'
+    const out = layerChassisTokenBlocks(input)
+    expect(out).toMatch(/^@import "tailwindcss";/)
+    expect(out).toMatch(/@layer pdk-defaults\s*\{\s*:root \{ --a: 1; \}\s*\}/)
+    expect(out).toMatch(/@layer pdk-defaults\s*\{\s*\.dark \{ --a: 2; \}\s*\}/)
+    expect(out).toMatch(/@theme inline \{ --b: var\(--a\); \}/)
   })
 })
 
@@ -113,7 +126,10 @@ describe('generateTemplate', () => {
     expect(button).toContain('buttonVariants')
     // linked tokens imported ahead of chassis css
     expect(readFileSync(join(t, 'src', 'assets', 'linked-tokens.css'), 'utf8')).toContain('--primary')
-    expect(readFileSync(join(t, 'src', 'assets', 'index.css'), 'utf8')).toMatch(/^@import '\.\/linked-tokens\.css';/)
+    const css = readFileSync(join(t, 'src', 'assets', 'index.css'), 'utf8')
+    expect(css).toMatch(/^@import '\.\/linked-tokens\.css';/)
+    expect(css).toMatch(/@layer pdk-defaults\s*\{[\s\S]*--chassis: 1/)
+    expect(css.indexOf('@import')).toBeLessThan(css.indexOf('@layer pdk-defaults'))
     // deps pinned from the linked repo where it declares them
     const pkg = JSON.parse(readFileSync(join(t, 'package.json'), 'utf8'))
     expect(pkg.name).toBe('acme-template')
@@ -153,6 +169,19 @@ describe('generateTemplate', () => {
     // versions came from the product repo
     const pkg = JSON.parse(readFileSync(join(t, 'package.json'), 'utf8'))
     expect(pkg.dependencies.react).toBe('^18.3.0')
+  })
+
+  it('merges peerDependencies at lower precedence for a DS-only link', () => {
+    kitRoot = makeKitRoot()
+    const ds = inspectRepo(join(FIXTURES, 'ds-repo'))
+    const result = generateTemplate({
+      kitRoot,
+      stackName: 'acme',
+      inputs: [{ report: ds, candidate: ds.candidates[0], role: 'design-system' }],
+    })
+    const pkg = JSON.parse(readFileSync(join(result.templateDir, 'package.json'), 'utf8'))
+    // ds-repo's peerDependencies.react (^18.0.0) wins over the chassis's ^19.0.0
+    expect(pkg.dependencies.react).toBe('^18.0.0')
   })
 
   it('refuses an existing template dir', () => {

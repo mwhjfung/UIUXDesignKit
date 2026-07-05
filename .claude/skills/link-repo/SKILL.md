@@ -53,6 +53,11 @@ If this is a **second** repo on an existing stack, immediately run
 `/sync-manifest <stack>` so the design-system copies win per the merge
 rules. Then `npm install` inside the new template.
 
+    Known limitation: if the FIRST linked repo provided no vendored ui or
+    token file, a later design-system attach copies files but does not yet
+    rewrite the template's designSystem block or CSS import — check
+    pdk.json's designSystem config manually in that case.
+
 ## Step 3 — Scan
 
     npx tsx pdk-core/src/manifest/scaffold.ts <stack> --root .

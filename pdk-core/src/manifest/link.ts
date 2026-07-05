@@ -12,7 +12,7 @@
  */
 
 import { execSync } from 'node:child_process'
-import { cpSync, existsSync, mkdirSync, readFileSync, readdirSync, rmSync, statSync, writeFileSync } from 'node:fs'
+import { cpSync, existsSync, readFileSync, readdirSync, rmSync, statSync, writeFileSync } from 'node:fs'
 import { basename, join, relative, resolve } from 'node:path'
 import { pathToFileURL } from 'node:url'
 import type { DesignSystemConfig } from './scaffold.js'
@@ -213,6 +213,59 @@ export interface GenerateResult {
   warnings: string[]
 }
 
+/**
+ * Wrap top-level :root/.dark token blocks in a cascade layer so the
+ * unlayered linked-tokens.css import always wins. Balanced-brace scan at
+ * depth 0 only — nested or @-rule-scoped blocks are left alone.
+ */
+export function layerChassisTokenBlocks(css: string): string {
+  let out = ''
+  let depth = 0
+  let segStart = 0
+  let i = 0
+
+  while (i < css.length) {
+    const ch = css[i]
+    if (depth === 0 && ch === '{') {
+      const between = css.slice(segStart, i)
+      const selector = between.trim()
+      // Find the matching closing brace for this block.
+      let d = 0
+      let j = i
+      while (j < css.length) {
+        if (css[j] === '{') d++
+        else if (css[j] === '}') {
+          d--
+          if (d === 0) break
+        }
+        j++
+      }
+      const blockEnd = Math.min(j, css.length - 1)
+      if (selector === ':root' || selector === '.dark') {
+        const leading = between.match(/^\s*/)?.[0] ?? ''
+        const block = css.slice(segStart + leading.length, blockEnd + 1)
+        out += leading + `@layer pdk-defaults {\n${block}\n}`
+      } else {
+        out += css.slice(segStart, blockEnd + 1)
+      }
+      i = blockEnd + 1
+      segStart = i
+      continue
+    }
+    if (depth === 0 && ch === ';') {
+      out += css.slice(segStart, i + 1)
+      i++
+      segStart = i
+      continue
+    }
+    if (ch === '{') depth++
+    else if (ch === '}') depth--
+    i++
+  }
+  out += css.slice(segStart)
+  return out
+}
+
 const CHASSIS_EXCLUDES = new Set(['node_modules', 'dist', 'manifest', 'package-lock.json', '.git'])
 
 export function generateTemplate(opts: {
@@ -289,7 +342,10 @@ export function generateTemplate(opts: {
       readFileSync(join(scanAbs, tokenSourceRel), 'utf8'),
     )
     const cssPath = join(templateDir, chassisCss)
-    writeFileSync(cssPath, `@import './linked-tokens.css';\n` + readFileSync(cssPath, 'utf8'))
+    writeFileSync(
+      cssPath,
+      `@import './linked-tokens.css';\n` + layerChassisTokenBlocks(readFileSync(cssPath, 'utf8')),
+    )
     dsConfig.tokenFiles = ['src/assets/linked-tokens.css', chassisCss]
   } else {
     dsConfig.tokenFiles = [chassisCss]
@@ -298,11 +354,15 @@ export function generateTemplate(opts: {
 
   // 3. package.json: chassis plumbing + linked versions winning on overlap.
   const chassisPkg = JSON.parse(readFileSync(join(chassisDir, 'package.json'), 'utf8'))
+  const scanPkg = readJson(join(join(scanSource.report.repoPath, scanSource.candidate.dir), 'package.json'))
+  const versionPkg = readJson(
+    join(join(versionSource.report.repoPath, versionSource.candidate.dir), 'package.json'),
+  )
   const linkedDeps = {
-    ...readJson(join(join(scanSource.report.repoPath, scanSource.candidate.dir), 'package.json'))
-      ?.dependencies,
-    ...readJson(join(join(versionSource.report.repoPath, versionSource.candidate.dir), 'package.json'))
-      ?.dependencies,
+    ...scanPkg?.peerDependencies,
+    ...scanPkg?.dependencies,
+    ...versionPkg?.peerDependencies,
+    ...versionPkg?.dependencies,
   }
   const dependencies: Record<string, string> = { ...chassisPkg.dependencies }
   for (const [dep, version] of Object.entries(linkedDeps)) {
@@ -482,6 +542,15 @@ if (invokedDirectly) {
         })
         created = true
         warnings = result.warnings
+      } else {
+        const isChassis = stack === 'react-shadcn' || stack === 'vue-shadcn'
+        const isLinkManaged = linkedRepos(templateDir).length > 0
+        if (isChassis || !isLinkManaged) {
+          throw new Error(
+            `stack-templates/${stack} is not link-managed (a built-in chassis or hand-authored ` +
+              `template) — attaching would corrupt it on the next sync. Pick a new stack name.`,
+          )
+        }
       }
       attachRepo(templateDir, {
         role,

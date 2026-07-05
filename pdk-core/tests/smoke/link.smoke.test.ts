@@ -4,7 +4,7 @@
  * the existing scanner unchanged.
  */
 import { execFileSync } from 'node:child_process'
-import { cpSync, mkdirSync, mkdtempSync, readFileSync, rmSync, writeFileSync, existsSync } from 'node:fs'
+import { mkdirSync, mkdtempSync, readFileSync, rmSync, writeFileSync, existsSync } from 'node:fs'
 import { tmpdir } from 'node:os'
 import { join } from 'node:path'
 import { afterAll, describe, expect, it } from 'vitest'
@@ -50,5 +50,11 @@ describe('link CLI end-to-end', () => {
       readFileSync(join(kitRoot, 'stack-templates', 'acme', 'manifest', 'components.json'), 'utf8'),
     )
     expect(components.components.map((c: any) => c.name)).toContain('Button')
+  })
+
+  it('attach refuses to link into a chassis template', () => {
+    expect(() =>
+      run(['attach', 'react-shadcn', '--repo', join(FIXTURES, 'vendored-app'), '--role', 'product', '--root', kitRoot]),
+    ).toThrow(/not link-managed|chassis/i)
   })
 })
