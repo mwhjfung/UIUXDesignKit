@@ -57,6 +57,27 @@ describe('layerChassisTokenBlocks', () => {
     expect(out).toMatch(/@layer pdk-defaults\s*\{\s*\.dark \{ --a: 2; \}\s*\}/)
     expect(out).toMatch(/@theme inline \{ --b: var\(--a\); \}/)
   })
+
+  it('wraps token blocks even when a comment precedes the selector', () => {
+    const css = '@import "tailwindcss";\n/* ─── Design token layer ─── */\n:root { --a: 1; }\n.dark { --a: 2; }\n'
+    const out = layerChassisTokenBlocks(css)
+    expect(out).toMatch(/@layer pdk-defaults\s*\{[\s\S]*--a: 1/)
+    expect(out).toMatch(/@layer pdk-defaults\s*\{[\s\S]*--a: 2/)
+    expect(out).toContain('Design token layer')   // comment preserved
+    expect(out).toContain('@import "tailwindcss";') // untouched
+  })
+
+  it('fires on the real chassis css files', () => {
+    for (const chassis of ['react-shadcn', 'vue-shadcn']) {
+      const real = readFileSync(
+        join(__dirname, '..', '..', '..', 'stack-templates', chassis, 'src', 'assets', 'index.css'),
+        'utf8',
+      )
+      const out = layerChassisTokenBlocks(real)
+      expect(out, `${chassis} :root must be wrapped`).toMatch(/@layer pdk-defaults\s*\{[\s\S]*:root/)
+      expect(out).not.toBe(real)
+    }
+  })
 })
 
 /** Minimal chassis standing in for stack-templates/react-shadcn. */
@@ -90,7 +111,10 @@ function makeKitRoot(): string {
   )
   writeFileSync(join(chassis, 'index.html'), '<script src="http://localhost:5170/tooling/pdk-prelude.js" async></script>')
   writeFileSync(join(chassis, 'vite.config.ts'), 'export default {}')
-  writeFileSync(join(chassis, 'src', 'assets', 'index.css'), '@import "tailwindcss";\n:root { --chassis: 1; }\n')
+  writeFileSync(
+    join(chassis, 'src', 'assets', 'index.css'),
+    '@import "tailwindcss";\n/* ─── Design token layer ─── */\n:root { --chassis: 1; }\n',
+  )
   writeFileSync(join(chassis, 'src', 'components', 'ui', 'button.tsx'), '// chassis button — must NOT survive when vendored ui is linked')
   writeFileSync(join(chassis, 'src', 'services', 'api.ts'), 'export const api = {}')
   mkdirSync(join(chassis, 'node_modules', 'junk'), { recursive: true })

@@ -217,6 +217,12 @@ export interface GenerateResult {
  * Wrap top-level :root/.dark token blocks in a cascade layer so the
  * unlayered linked-tokens.css import always wins. Balanced-brace scan at
  * depth 0 only — nested or @-rule-scoped blocks are left alone.
+ *
+ * The selector is matched with CSS comments stripped from the
+ * between-segment, so a `/* comment *\/` immediately preceding `:root {` or
+ * `.dark {` (the real chassis shape) still matches. Only the selector text
+ * itself — and everything after it — is wrapped in the @layer; any leading
+ * comment stays outside (and before) the wrapper, unwrapped.
  */
 export function layerChassisTokenBlocks(css: string): string {
   let out = ''
@@ -228,7 +234,8 @@ export function layerChassisTokenBlocks(css: string): string {
     const ch = css[i]
     if (depth === 0 && ch === '{') {
       const between = css.slice(segStart, i)
-      const selector = between.trim()
+      const stripped = between.replace(/\/\*[\s\S]*?\*\//g, '').trim()
+      const isTokenSelector = stripped === ':root' || stripped === '.dark'
       // Find the matching closing brace for this block.
       let d = 0
       let j = i
@@ -241,10 +248,15 @@ export function layerChassisTokenBlocks(css: string): string {
         j++
       }
       const blockEnd = Math.min(j, css.length - 1)
-      if (selector === ':root' || selector === '.dark') {
-        const leading = between.match(/^\s*/)?.[0] ?? ''
-        const block = css.slice(segStart + leading.length, blockEnd + 1)
-        out += leading + `@layer pdk-defaults {\n${block}\n}`
+      if (isTokenSelector) {
+        // Locate where the selector text itself starts within `between`, so
+        // any preceding comment/whitespace is emitted unwrapped, before the
+        // @layer block.
+        const selectorMatch = between.match(/(:root|\.dark)\s*$/)
+        const selectorOffset = selectorMatch ? selectorMatch.index! : 0
+        const preamble = css.slice(segStart, segStart + selectorOffset)
+        const block = css.slice(segStart + selectorOffset, blockEnd + 1)
+        out += preamble + `@layer pdk-defaults {\n${block}\n}`
       } else {
         out += css.slice(segStart, blockEnd + 1)
       }

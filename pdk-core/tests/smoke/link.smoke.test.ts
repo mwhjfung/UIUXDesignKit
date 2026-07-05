@@ -35,7 +35,10 @@ describe('link CLI end-to-end', () => {
     mkdirSync(join(chassis, 'src', 'components', 'ui'), { recursive: true })
     writeFileSync(join(chassis, 'package.json'), JSON.stringify({ name: 'chassis', dependencies: { react: '^19.0.0' } }))
     writeFileSync(join(chassis, 'pdk.json'), JSON.stringify({ title: 'PROTOTYPE_TITLE', slug: 'PROTOTYPE_SLUG', framework: 'react', library: 'shadcn', defaultPort: 'PROTOTYPE_PORT' }))
-    writeFileSync(join(chassis, 'src', 'assets', 'index.css'), ':root { --chassis: 1; }\n')
+    writeFileSync(
+      join(chassis, 'src', 'assets', 'index.css'),
+      '@import "tailwindcss";\n/* ─── Design token layer ─── */\n:root { --chassis: 1; }\n',
+    )
     writeFileSync(join(chassis, 'index.html'), '<html></html>')
 
     const out = JSON.parse(
@@ -52,6 +55,8 @@ describe('link CLI end-to-end', () => {
     expect(components.components.map((c: any) => c.name)).toContain('Button')
   })
 
+  // Depends on the preceding test having already created stack-templates/react-shadcn
+  // as a real chassis dir in the shared kitRoot — this test does not create it itself.
   it('attach refuses to link into a chassis template', () => {
     expect(() =>
       run(['attach', 'react-shadcn', '--repo', join(FIXTURES, 'vendored-app'), '--role', 'product', '--root', kitRoot]),
