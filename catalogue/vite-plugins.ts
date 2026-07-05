@@ -9,6 +9,11 @@
  *                     GET  /__api/stacks           list stack templates
  *                     POST /__api/create-prototype copy a stack template
  *                     POST /__api/remix-prototype  copy an existing prototype
+ *                     GET  /__api/screens          list screens from linked product repos
+ *                     GET  /__api/requests         list catalogue requests
+ *                     POST /__api/requests         create a catalogue request
+ *                     PATCH /__api/requests/<id>   update a catalogue request
+ *                     POST /__api/update-status    update a prototype's status
  *
  * Scaffolding is a directory-tree copy of a stack template (or an existing
  * prototype, for remix) with placeholder-token substitution and automatic
@@ -25,6 +30,13 @@ import {
 import type { IncomingMessage, ServerResponse } from 'node:http'
 import { extname, join, resolve } from 'node:path'
 import type { Plugin } from 'vite'
+import { linkedRepos, listScreens } from '@pdk/core/manifest'
+import {
+  addRequest,
+  listRequests,
+  updatePrototypeStatus,
+  updateRequest,
+} from '@pdk/core/requests'
 
 const repoRoot = resolve(__dirname, '..')
 const prototypesDir = join(repoRoot, 'prototypes')
@@ -179,6 +191,16 @@ export function prototypesApi(): Plugin {
                   framework: pdk.framework ?? 'unknown',
                   library: pdk.library ?? 'unknown',
                   hasManifest: existsSync(join(stackTemplatesDir, e.name, 'manifest')),
+                  productRepo: (() => {
+                    try {
+                      const product = linkedRepos(join(stackTemplatesDir, e.name)).find(
+                        (r) => r.role === 'product',
+                      )
+                      return product ? { path: product.path, appDir: product.appDir } : undefined
+                    } catch {
+                      return undefined
+                    }
+                  })(),
                 }
               : null
           })
@@ -284,6 +306,105 @@ export function prototypesApi(): Plugin {
           json(res, 201, { slug: name, port })
         } catch (e) {
           json(res, 500, { error: e instanceof Error ? e.message : 'Unknown error' })
+        }
+      })
+
+      server.middlewares.use('/__api/screens', (req, res) => {
+        if (req.method !== 'GET') return json(res, 405, { error: 'Method not allowed' })
+        const screens: Array<Record<string, unknown>> = []
+        let sawProductRepo = false
+        let sawMissingPath = false
+        for (const entry of readdirSync(stackTemplatesDir, { withFileTypes: true })) {
+          if (!entry.isDirectory()) continue
+          let repos
+          try {
+            repos = linkedRepos(join(stackTemplatesDir, entry.name))
+          } catch {
+            continue
+          }
+          for (const repo of repos.filter((r) => r.role === 'product')) {
+            sawProductRepo = true
+            if (!existsSync(join(repo.path, repo.appDir))) {
+              sawMissingPath = true
+              continue
+            }
+            for (const screen of listScreens(repo.path, repo.appDir)) {
+              screens.push({
+                repoPath: repo.path,
+                appDir: repo.appDir,
+                file: screen.file,
+                name: screen.name,
+                stack: entry.name,
+              })
+            }
+          }
+        }
+        const reason =
+          screens.length > 0
+            ? undefined
+            : !sawProductRepo
+              ? 'no-linked-product-repo'
+              : sawMissingPath
+                ? 'linked-repo-missing'
+                : undefined
+        json(res, 200, { screens, reason })
+      })
+
+      server.middlewares.use('/__api/requests', async (req, res) => {
+        try {
+          if (req.method === 'GET') {
+            return json(res, 200, { requests: listRequests(repoRoot) })
+          }
+          if (req.method === 'POST') {
+            const body = JSON.parse(await readBody(req))
+            const validShape =
+              (body?.type === 'import-screen' &&
+                body.screen?.repoPath &&
+                body.screen?.file &&
+                body.screen?.title &&
+                body.screen?.stack) ||
+              (body?.type === 'handoff' && body.handoff?.slug && body.handoff?.targetRepo)
+            if (!validShape) {
+              return json(res, 400, {
+                error: 'Request needs type import-screen (with screen) or handoff (with handoff).',
+              })
+            }
+            return json(res, 201, {
+              request: addRequest(repoRoot, { type: body.type, screen: body.screen, handoff: body.handoff }),
+            })
+          }
+          if (req.method === 'PATCH') {
+            const id = (req.url ?? '').split('?')[0].replace(/^\//, '')
+            if (!id) return json(res, 400, { error: 'PATCH /__api/requests/<id>' })
+            const patch = JSON.parse(await readBody(req))
+            try {
+              return json(res, 200, {
+                request: updateRequest(repoRoot, id, { status: patch.status, note: patch.note }),
+              })
+            } catch (e) {
+              return json(res, 404, { error: (e as Error).message })
+            }
+          }
+          return json(res, 405, { error: 'Method not allowed' })
+        } catch (e) {
+          return json(res, 500, { error: e instanceof Error ? e.message : 'Unknown error' })
+        }
+      })
+
+      server.middlewares.use('/__api/update-status', async (req, res) => {
+        if (req.method !== 'POST') return json(res, 405, { error: 'Method not allowed' })
+        try {
+          const { slug, status } = JSON.parse(await readBody(req))
+          updatePrototypeStatus(repoRoot, slug ?? '', status ?? '')
+          return json(res, 200, { ok: true })
+        } catch (e) {
+          const message = e instanceof Error ? e.message : 'Unknown error'
+          const code = message.includes('Unknown prototype')
+            ? 404
+            : message.includes('Invalid status')
+              ? 422
+              : 500
+          return json(res, code, { error: message })
         }
       })
     },
