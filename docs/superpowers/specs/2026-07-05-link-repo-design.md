@@ -234,6 +234,15 @@ graduate into tested TS later, per the kit's standing decision.
   `/import-screen` must produce a rendering prototype whose data flows only
   through `src/services/`, with the severed pieces listed in `context.md`.
 
+## Explicitly refused (not just deferred)
+
+Prototypes never connect to real endpoints from inside the kit. All data
+flows through the typed mock seam (`src/services/`), with fixtures shaped
+by the product's real types. The skills (`prototyping`, `import-screen`)
+actively refuse prompts to wire live APIs, hardcode credentials, or point
+at non-mock base URLs — connecting real plumbing is the developer's step,
+via /handoff, in the target codebase, under its review gates.
+
 ## Out of scope (v2 candidates)
 
 - Bulk conversion of all screens at link time (import stays per-screen,
