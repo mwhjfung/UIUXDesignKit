@@ -11,6 +11,7 @@
  * conventions, dependency pins, and the default handoff target.
  */
 
+import { execSync } from 'node:child_process'
 import { cpSync, existsSync, mkdirSync, readFileSync, readdirSync, rmSync, statSync, writeFileSync } from 'node:fs'
 import { basename, join, relative, resolve } from 'node:path'
 import type { DesignSystemConfig } from './scaffold.js'
@@ -329,4 +330,98 @@ export function generateTemplate(opts: {
   )
 
   return { templateDir, chassis, warnings }
+}
+
+export interface LinkedRepo {
+  role: RepoRole
+  path: string
+  commit: string | null
+  linkedAt: string
+  appDir: string
+  vendoredUiDir: string | null
+  tokenFile: string | null
+}
+
+export function gitHead(repoPath: string): string | null {
+  try {
+    return execSync('git rev-parse HEAD', { cwd: repoPath, stdio: ['ignore', 'pipe', 'ignore'] })
+      .toString()
+      .trim()
+  } catch {
+    return null
+  }
+}
+
+function pdkJsonPath(templateDir: string): string {
+  const p = join(templateDir, 'pdk.json')
+  if (!existsSync(p)) throw new Error(`${templateDir} has no pdk.json — not a stack template.`)
+  return p
+}
+
+export function linkedRepos(templateDir: string): LinkedRepo[] {
+  const pdk = JSON.parse(readFileSync(pdkJsonPath(templateDir), 'utf8'))
+  return Array.isArray(pdk.linkedRepos) ? pdk.linkedRepos : []
+}
+
+export function attachRepo(templateDir: string, entry: LinkedRepo): void {
+  const path = pdkJsonPath(templateDir)
+  const pdk = JSON.parse(readFileSync(path, 'utf8'))
+  const repos: LinkedRepo[] = Array.isArray(pdk.linkedRepos) ? pdk.linkedRepos : []
+  const kept = repos.filter((r) => !(r.role === entry.role && r.path === entry.path))
+  pdk.linkedRepos = [...kept, entry]
+  writeFileSync(path, JSON.stringify(pdk, null, 2) + '\n')
+}
+
+export interface LinkSyncEntry {
+  repo: LinkedRepo
+  currentCommit: string | null
+  drifted: boolean
+  refreshed: string[]
+  missing: boolean
+}
+
+/**
+ * Refresh template copies from each linked repo. The design-system source
+ * (or sole product repo) owns vendored ui + tokens; those are re-copied
+ * whenever the repo is reachable — commit drift is reported, not required,
+ * because non-git and dirty-tree repos are normal during development.
+ */
+export function syncLink(templateDir: string): LinkSyncEntry[] {
+  const entries: LinkSyncEntry[] = []
+  const repos = linkedRepos(templateDir)
+  const scanOwner =
+    repos.find((r) => r.role === 'design-system') ?? repos.find((r) => r.role === 'product')
+
+  for (const repo of repos) {
+    const abs = join(repo.path, repo.appDir)
+    if (!existsSync(abs)) {
+      entries.push({ repo, currentCommit: null, drifted: false, refreshed: [], missing: true })
+      continue
+    }
+    const currentCommit = gitHead(repo.path)
+    const drifted = repo.commit !== null && currentCommit !== null && currentCommit !== repo.commit
+    const refreshed: string[] = []
+
+    if (repo === scanOwner) {
+      if (repo.vendoredUiDir && existsSync(join(abs, repo.vendoredUiDir))) {
+        const target = join(templateDir, 'src', 'components', 'ui')
+        rmSync(target, { recursive: true, force: true })
+        cpSync(join(abs, repo.vendoredUiDir), target, { recursive: true })
+        refreshed.push('src/components/ui')
+      }
+      if (repo.tokenFile && existsSync(join(abs, repo.tokenFile))) {
+        writeFileSync(
+          join(templateDir, 'src', 'assets', 'linked-tokens.css'),
+          readFileSync(join(abs, repo.tokenFile), 'utf8'),
+        )
+        refreshed.push('src/assets/linked-tokens.css')
+      }
+    }
+
+    if (currentCommit !== repo.commit) {
+      attachRepo(templateDir, { ...repo, commit: currentCommit, linkedAt: new Date().toISOString() })
+    }
+    entries.push({ repo, currentCommit, drifted, refreshed, missing: false })
+  }
+  return entries
 }

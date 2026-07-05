@@ -3,6 +3,7 @@ import { cpSync, existsSync, mkdirSync, mkdtempSync, readFileSync, rmSync, write
 import { tmpdir } from 'node:os'
 import { describe, expect, it, afterEach } from 'vitest'
 import { inspectRepo, generateTemplate } from '../../src/manifest/link.js'
+import { attachRepo, linkedRepos, syncLink } from '../../src/manifest/link.js'
 
 const FIXTURES = join(__dirname, '..', 'fixtures', 'link')
 
@@ -178,5 +179,69 @@ describe('generateTemplate', () => {
     for (const bad of ['../escape', 'a/b', 'Foo Bar', '']) {
       expect(() => generateTemplate({ kitRoot, stackName: bad, inputs })).toThrow(/stack name/i)
     }
+  })
+})
+
+function makeLinkedTemplate(): { kitRoot: string; templateDir: string; repoDir: string } {
+  const root = makeKitRoot()
+  const repoSrc = join(FIXTURES, 'vendored-app')
+  const repoDir = join(root, 'linked-src')          // mutable copy of the fixture
+  cpSync(repoSrc, repoDir, { recursive: true })
+  const report = inspectRepo(repoDir)
+  const { templateDir } = generateTemplate({
+    kitRoot: root,
+    stackName: 'acme',
+    inputs: [{ report, candidate: report.candidates[0], role: 'product' }],
+  })
+  attachRepo(templateDir, {
+    role: 'product',
+    path: repoDir,
+    commit: null,
+    linkedAt: '2026-07-05T00:00:00.000Z',
+    appDir: '.',
+    vendoredUiDir: 'src/components/ui',
+    tokenFile: 'src/styles/globals.css',
+  })
+  return { kitRoot: root, templateDir, repoDir }
+}
+
+describe('attachRepo / linkedRepos', () => {
+  it('records and replaces entries keyed by role+path', () => {
+    const ctx = makeLinkedTemplate()
+    kitRoot = ctx.kitRoot
+    expect(linkedRepos(ctx.templateDir)).toHaveLength(1)
+    attachRepo(ctx.templateDir, { ...linkedRepos(ctx.templateDir)[0], linkedAt: '2026-07-06T00:00:00.000Z' })
+    const repos = linkedRepos(ctx.templateDir)
+    expect(repos).toHaveLength(1)                       // replaced, not duplicated
+    expect(repos[0].linkedAt).toBe('2026-07-06T00:00:00.000Z')
+  })
+})
+
+describe('syncLink', () => {
+  it('reports no drift for non-git repos but still refreshes copies', () => {
+    const ctx = makeLinkedTemplate()
+    kitRoot = ctx.kitRoot
+    // Mutate the linked repo: new component + token change
+    writeFileSync(
+      join(ctx.repoDir, 'src', 'components', 'ui', 'chip.tsx'),
+      "import { cva } from 'class-variance-authority'\nconst c = cva('x', { variants: { variant: { default: 'a' } }, defaultVariants: { variant: 'default' } })\nexport function Chip() { return <span data-slot=\"chip\" className={c({})} /> }\n",
+    )
+    writeFileSync(join(ctx.repoDir, 'src', 'styles', 'globals.css'), ':root { --primary: #ff0000; }\n')
+    const entries = syncLink(ctx.templateDir)
+    expect(entries).toHaveLength(1)
+    expect(entries[0].missing).toBe(false)
+    expect(entries[0].refreshed).toContain('src/components/ui')
+    expect(entries[0].refreshed).toContain('src/assets/linked-tokens.css')
+    expect(existsSync(join(ctx.templateDir, 'src', 'components', 'ui', 'chip.tsx'))).toBe(true)
+    expect(readFileSync(join(ctx.templateDir, 'src', 'assets', 'linked-tokens.css'), 'utf8')).toContain('#ff0000')
+  })
+
+  it('flags a missing linked repo instead of throwing', () => {
+    const ctx = makeLinkedTemplate()
+    kitRoot = ctx.kitRoot
+    rmSync(ctx.repoDir, { recursive: true, force: true })
+    const entries = syncLink(ctx.templateDir)
+    expect(entries[0].missing).toBe(true)
+    expect(entries[0].refreshed).toEqual([])
   })
 })

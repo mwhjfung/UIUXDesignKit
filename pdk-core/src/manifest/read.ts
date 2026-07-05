@@ -61,7 +61,7 @@ function readMd(dir: string, file: string): string {
 
 /** True when a curated MD body is still the unedited stub (or empty). */
 export function isStubMd(body: string): boolean {
-  return body.trim() === '' || body.includes('pdk:stub')
+  return body.trim() === '' || body.includes('pdk:stub') || body.includes('pdk:mined')
 }
 
 export function getManifest(stack: string, opts: ReadOptions = {}): Manifest {

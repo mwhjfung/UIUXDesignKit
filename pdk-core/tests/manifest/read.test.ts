@@ -87,4 +87,8 @@ describe('isStubMd', () => {
     expect(isStubMd('<!-- pdk:stub -->\n# Patterns')).toBe(true)
     expect(isStubMd('# Patterns\nOur list page uses Table.')).toBe(false)
   })
+
+  it('treats pdk:mined drafts as not yet curated', () => {
+    expect(isStubMd('<!-- pdk:mined — confirm via the shortened curation pass -->\n# Patterns')).toBe(true)
+  })
 })
