@@ -244,4 +244,16 @@ describe('syncLink', () => {
     expect(entries[0].missing).toBe(true)
     expect(entries[0].refreshed).toEqual([])
   })
+
+  it('dryRun computes refresh candidates without writing anything', () => {
+    const ctx = makeLinkedTemplate()
+    kitRoot = ctx.kitRoot
+    writeFileSync(join(ctx.repoDir, 'src', 'styles', 'globals.css'), ':root { --primary: #00ff00; }\n')
+    const before = readFileSync(join(ctx.templateDir, 'src', 'assets', 'linked-tokens.css'), 'utf8')
+    const pdkBefore = readFileSync(join(ctx.templateDir, 'pdk.json'), 'utf8')
+    const entries = syncLink(ctx.templateDir, { dryRun: true })
+    expect(entries[0].refreshed).toContain('src/assets/linked-tokens.css')
+    expect(readFileSync(join(ctx.templateDir, 'src', 'assets', 'linked-tokens.css'), 'utf8')).toBe(before)
+    expect(readFileSync(join(ctx.templateDir, 'pdk.json'), 'utf8')).toBe(pdkBefore)
+  })
 })

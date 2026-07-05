@@ -385,8 +385,14 @@ export interface LinkSyncEntry {
  * (or sole product repo) owns vendored ui + tokens; those are re-copied
  * whenever the repo is reachable — commit drift is reported, not required,
  * because non-git and dirty-tree repos are normal during development.
+ *
+ * When `opts.dryRun` is set, this is entirely side-effect-free: no
+ * filesystem writes and no `attachRepo` call. `currentCommit`, `drifted`,
+ * and `missing` are still computed, and `refreshed` lists the
+ * template-relative paths that WOULD be refreshed (same strings as the
+ * write path: 'src/components/ui', 'src/assets/linked-tokens.css').
  */
-export function syncLink(templateDir: string): LinkSyncEntry[] {
+export function syncLink(templateDir: string, opts: { dryRun?: boolean } = {}): LinkSyncEntry[] {
   const entries: LinkSyncEntry[] = []
   const repos = linkedRepos(templateDir)
   const scanOwner =
@@ -404,21 +410,25 @@ export function syncLink(templateDir: string): LinkSyncEntry[] {
 
     if (repo === scanOwner) {
       if (repo.vendoredUiDir && existsSync(join(abs, repo.vendoredUiDir))) {
-        const target = join(templateDir, 'src', 'components', 'ui')
-        rmSync(target, { recursive: true, force: true })
-        cpSync(join(abs, repo.vendoredUiDir), target, { recursive: true })
+        if (!opts.dryRun) {
+          const target = join(templateDir, 'src', 'components', 'ui')
+          rmSync(target, { recursive: true, force: true })
+          cpSync(join(abs, repo.vendoredUiDir), target, { recursive: true })
+        }
         refreshed.push('src/components/ui')
       }
       if (repo.tokenFile && existsSync(join(abs, repo.tokenFile))) {
-        writeFileSync(
-          join(templateDir, 'src', 'assets', 'linked-tokens.css'),
-          readFileSync(join(abs, repo.tokenFile), 'utf8'),
-        )
+        if (!opts.dryRun) {
+          writeFileSync(
+            join(templateDir, 'src', 'assets', 'linked-tokens.css'),
+            readFileSync(join(abs, repo.tokenFile), 'utf8'),
+          )
+        }
         refreshed.push('src/assets/linked-tokens.css')
       }
     }
 
-    if (currentCommit !== repo.commit) {
+    if (!opts.dryRun && currentCommit !== repo.commit) {
       attachRepo(templateDir, { ...repo, commit: currentCommit, linkedAt: new Date().toISOString() })
     }
     entries.push({ repo, currentCommit, drifted, refreshed, missing: false })

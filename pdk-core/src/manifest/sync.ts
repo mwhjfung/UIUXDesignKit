@@ -127,7 +127,7 @@ export async function syncManifest(
 
   let linkSync: LinkSyncEntry[] | undefined
   if (linkedRepos(templateDir).length > 0) {
-    linkSync = syncLink(templateDir)
+    linkSync = syncLink(templateDir, { dryRun: opts.dryRun })
   }
 
   const installed = installedVersions(templateDir, meta.packages)
