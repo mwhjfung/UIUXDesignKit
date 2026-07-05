@@ -18,7 +18,7 @@
     },
     "./requests": {
       "types": "./dist/requests/store.d.ts",
-      "default": "./dist/requests/store.js"
+      "import": "./dist/requests/store.js"
     }
   },
   "scripts": {
