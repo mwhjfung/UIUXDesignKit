@@ -5,6 +5,7 @@ import { describe, expect, it, afterEach } from 'vitest'
 import { inspectRepo, generateTemplate } from '../../src/manifest/link.js'
 import { attachRepo, linkedRepos, syncLink } from '../../src/manifest/link.js'
 import { layerChassisTokenBlocks } from '../../src/manifest/link.js'
+import { listScreens } from '../../src/manifest/link.js'
 
 const FIXTURES = join(__dirname, '..', 'fixtures', 'link')
 
@@ -308,5 +309,21 @@ describe('syncLink', () => {
     expect(entries[0].refreshed).toContain('src/assets/linked-tokens.css')
     expect(readFileSync(join(ctx.templateDir, 'src', 'assets', 'linked-tokens.css'), 'utf8')).toBe(before)
     expect(readFileSync(join(ctx.templateDir, 'pdk.json'), 'utf8')).toBe(pdkBefore)
+  })
+})
+
+describe('listScreens', () => {
+  it('finds screens in a product repo and humanises names', () => {
+    const screens = listScreens(join(FIXTURES, 'vendored-app'))
+    expect(screens).toEqual([{ file: 'src/pages/Tasks.tsx', name: 'Tasks' }])
+  })
+
+  it('returns [] for a design-system repo with no screen dirs', () => {
+    expect(listScreens(join(FIXTURES, 'ds-repo'))).toEqual([])
+  })
+
+  it('respects appDir in a monorepo', () => {
+    const screens = listScreens(join(FIXTURES, 'monorepo'), 'apps/web')
+    expect(screens).toEqual([{ file: 'src/pages/Home.tsx', name: 'Home' }])
   })
 })

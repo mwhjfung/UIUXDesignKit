@@ -201,6 +201,45 @@ export function inspectRepo(repoPath: string): RepoReport {
   }
 }
 
+export interface ScreenEntry {
+  file: string
+  name: string
+}
+
+const SCREEN_FILE_RE = /\.(tsx|jsx|vue)$/
+const SCREEN_NAME_SUFFIXES = /\s+(page|view|screen)$/i
+
+function humaniseScreenName(filename: string): string {
+  const base = filename.replace(/\.[^.]+$/, '')
+  const words = base
+    .replace(/([a-z0-9])([A-Z])/g, '$1 $2')
+    .replace(/[-_]+/g, ' ')
+    .trim()
+    .split(/\s+/)
+    .map((w) => (w ? w[0].toUpperCase() + w.slice(1) : w))
+    .join(' ')
+  return words.replace(SCREEN_NAME_SUFFIXES, '') || base
+}
+
+/** List candidate screens in a (product) repo's screen directories. */
+export function listScreens(repoPath: string, appDir = '.'): ScreenEntry[] {
+  const base = join(resolve(repoPath), appDir)
+  const screens: ScreenEntry[] = []
+  const walkScreens = (dir: string, depth: number): void => {
+    if (depth > 3 || !existsSync(dir)) return
+    for (const entry of readdirSync(dir)) {
+      if (entry === 'node_modules' || entry.startsWith('.') || entry.startsWith('_')) continue
+      const full = join(dir, entry)
+      if (statSync(full).isDirectory()) walkScreens(full, depth + 1)
+      else if (SCREEN_FILE_RE.test(entry)) {
+        screens.push({ file: relative(base, full), name: humaniseScreenName(entry) })
+      }
+    }
+  }
+  for (const dir of SCREEN_DIRS) walkScreens(join(base, dir), 0)
+  return screens.sort((a, b) => a.name.localeCompare(b.name))
+}
+
 export interface LinkInput {
   report: RepoReport
   candidate: AppCandidate

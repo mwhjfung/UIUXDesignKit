@@ -21,6 +21,7 @@ export {
   linkedRepos,
   syncLink,
   gitHead,
+  listScreens,
 } from './link.js'
 export type {
   RepoRole,
@@ -30,4 +31,5 @@ export type {
   GenerateResult,
   LinkedRepo,
   LinkSyncEntry,
+  ScreenEntry,
 } from './link.js'
