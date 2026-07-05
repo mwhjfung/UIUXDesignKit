@@ -27,6 +27,11 @@ default handoff target.
 3. **The linked repo becomes the default `/handoff` target.**
 4. **Input is a local clone path.** A GitHub URL is accepted but simply
    cloned to a sibling directory first.
+5. **More than one repo can be linked, each with a role.** The common shape
+   is a *design-system repo* (source of truth for components, tokens,
+   icons) plus a *product repo* (source of screens and conventions, and the
+   handoff target). Several product repos may share one linked design
+   system — they all attach to the same stack template.
 
 ## Approaches considered
 
@@ -48,12 +53,18 @@ default handoff target.
 ## User experience
 
 ```
+/link-repo ~/work/acme-design-system     # optional, if the DS lives separately
 /link-repo ~/work/acme-app
 ```
 
-1. Kit inspects the repo, reports what it found: *"React 18 + vendored
-   shadcn-style components (src/components/ui, 41 components), tokens in
-   src/styles/globals.css, lucide-react icons. Link as stack 'acme-app'?"*
+1. Kit inspects each repo and infers its **role** from what it finds — a
+   package of components with no screens reads as a design-system repo; an
+   app with routes/pages reads as a product repo (confirmable either way).
+   It reports: *"React 18 + vendored shadcn-style components
+   (src/components/ui, 41 components), tokens in src/styles/globals.css,
+   lucide-react icons. Link as product repo on stack 'acme'?"* When a
+   product repo consumes an already-linked design system, the kit attaches
+   it to that existing stack instead of creating a new one.
 2. On confirm, it generates `stack-templates/acme-app/`, scans the manifest,
    and mines conventions from the repo's screens into draft
    `patterns.md`/`rules.md`.
@@ -91,26 +102,39 @@ Three layers, mirroring the kit's existing seams:
     `src/services/` seam
   - DS dependencies mirrored **at the linked repo's exact versions**
   - vendored `components/ui` + token CSS copied in (local-cva case)
-  - `pdk.json` gains a `designSystem` block (existing scanner contract) plus:
+  - `pdk.json` gains a `designSystem` block (existing scanner contract) plus
+    a **list** of linked repos, each with a role:
     ```json
-    "linkedRepo": {
-      "path": "/abs/path/to/acme-app",
-      "commit": "<sha at link time>",
-      "linkedAt": "2026-07-05",
-      "appDir": "apps/web"        // monorepo case; "." otherwise
-    }
+    "linkedRepos": [
+      { "role": "design-system", "path": "/abs/path/acme-design-system",
+        "commit": "<sha>", "linkedAt": "2026-07-05", "appDir": "." },
+      { "role": "product", "path": "/abs/path/acme-app",
+        "commit": "<sha>", "linkedAt": "2026-07-05", "appDir": "apps/web" }
+    ]
     ```
-- `syncLink(templateDir)` — used by `/sync-manifest`: compares the linked
-  repo's current commit to the recorded one; re-copies vendored ui + tokens,
-  re-pins versions, then delegates to the existing manifest sync (which
-  already diffs and flags stale curated prose).
+  - **Merge rules when both roles are present**: the design-system repo is
+    the source of truth for component/token/icon *scanning* (source-level
+    CVA and token files beat `.d.ts` archaeology in node_modules); the
+    product repo is the source of truth for *versions in use* (its
+    lockfile pins the mirrored dependencies) and for screens/conventions.
+    With only a product repo linked, its vendored components or installed
+    DS packages are scanned instead — exactly the current scanner paths.
+- `syncLink(templateDir)` — used by `/sync-manifest`: for **each** linked
+  repo, compares its current commit to the recorded one; re-copies vendored
+  ui + tokens from the design-system source, re-pins versions from the
+  product repo, then delegates to the existing manifest sync (which already
+  diffs and flags stale curated prose).
 
 ### 2. `.claude/skills/link-repo/SKILL.md` (new)
 
-Orchestrates: run inspection → present findings → confirm/disambiguate →
-generate template → `npm install` in template → run `scaffoldManifest` →
-**convention mining** → shortened curation confirmation → register the repo
-in `docs/knowledge-sources.md` (`type: path`, `trust: additive`) → report.
+Orchestrates: run inspection → present findings + inferred role →
+confirm/disambiguate → attach to an existing stack or generate a new
+template → `npm install` in template → run `scaffoldManifest` →
+**convention mining** (product repos only) → shortened curation
+confirmation → register the repo in `docs/knowledge-sources.md`
+(design-system repo: `trust: authoritative` — its docs/stories are the
+official word on component usage; product repo: `trust: additive`) →
+report. Linking a second repo re-runs only the parts its role owns.
 
 Convention mining (AI judgement, deliberately not TS): read a sample of the
 repo's screens/routes; draft `patterns.md` (recurring layout wrappers,
@@ -131,8 +155,9 @@ reverse**, and it reuses the same seam.
 
 Flow:
 
-1. **Locate** the screen in the linked repo (route tables, pages/ dirs,
-   filename match). Ambiguous → list candidates and ask.
+1. **Locate** the screen in a linked *product* repo (route tables, pages/
+   dirs, filename match). Several product repos → search all, say which one
+   matched. Ambiguous → list candidates and ask.
 2. **Scaffold** a fresh prototype from the linked stack template via the
    existing catalogue create API (`pdk.json` records
    `importedFrom: { screen, commit }` alongside remix-style lineage).
@@ -167,9 +192,11 @@ graduate into tested TS later, per the kit's standing decision.
 
 ### 4. Touch-ups to existing pieces
 
-- `/handoff`: when the prototype's stack has `linkedRepo`, default the
-  target to `linkedRepo.path` (+ suggested subdirectory) instead of asking.
-- `/sync-manifest`: call `syncLink()` first when the stack has `linkedRepo`.
+- `/handoff`: when the prototype's stack has linked repos, default the
+  target to the *product* repo's path (+ suggested subdirectory); if the
+  prototype was imported from a screen, default to that screen's repo; with
+  several product repos and no import lineage, ask which.
+- `/sync-manifest`: call `syncLink()` first when the stack has `linkedRepos`.
 - Catalogue: no changes needed — generated templates appear automatically in
   `GET /__api/stacks`.
 - README/CLAUDE.md: document the linked-repo flow as the recommended path;
@@ -181,6 +208,10 @@ graduate into tested TS later, per the kit's standing decision.
 - **No recognisable design system** → report what was looked for, offer the
   manual flow (`designSystem` block authored by hand), don't scaffold junk.
 - **Monorepo, multiple apps/DS candidates** → list candidates, ask.
+- **Role conflict** (two repos both claiming design-system for one stack, or
+  a DS repo whose scan disagrees with the product repo's vendored copies) →
+  the design-system repo wins for scanning, and the discrepancy is reported
+  rather than silently blended (same rule knowledge-sources already uses).
 - **Framework unsupported** (not React/Vue) → stop with a clear message;
   don't attempt a chassis that can't render the components.
 - **Linked repo moved/deleted at sync or handoff time** → surface the stored
@@ -190,10 +221,12 @@ graduate into tested TS later, per the kit's standing decision.
 
 ## Testing
 
-- Unit: `inspectRepo` against three fixture repos (vendored-shadcn app,
-  packaged-DS app, monorepo with two apps); `generateTemplate` output shape
-  (pdk.json contract, dependency pinning, chassis files present);
-  `syncLink` commit-drift behaviour.
+- Unit: `inspectRepo` against four fixture repos (vendored-shadcn app,
+  packaged-DS app, standalone design-system repo, monorepo with two apps —
+  including role inference for each); `generateTemplate` output shape
+  (pdk.json contract, dependency pinning, chassis files present) plus the
+  DS-repo + product-repo **merge rules**; `syncLink` commit-drift behaviour
+  across multiple linked repos.
 - Smoke: link a scratch repo end-to-end → template builds, manifest scans,
   a prototype scaffolds from the new stack and serves `/__pdk/manifest`.
 - Screen import (skill-driven, so exercised not unit-tested): a fixture app
@@ -206,6 +239,6 @@ graduate into tested TS later, per the kit's standing decision.
 - Bulk conversion of all screens at link time (import stays per-screen,
   on demand).
 - Live watching of the linked repo.
-- Multi-repo links (one kit ↔ several products) — the data model
-  (`linkedRepo` per stack template) already permits it; the skill just
-  handles one at a time.
+- Automatic cross-repo version reconciliation (e.g. warning when the DS
+  repo's main is ahead of what the product repo ships) beyond the simple
+  commit-drift report `/sync-manifest` gives.
