@@ -20,10 +20,15 @@ a checklist, not an archaeology dig.
 ## Inputs
 
 - **slug** — folder under `prototypes/`
-- **target** — absolute path to the developer's repo (+ optional subdirectory
-  for the code, e.g. `src/features/<slug>`; suggest that as the default)
+- **target** — absolute path to the developer's repo (+ optional
+  subdirectory for the code, e.g. `src/features/<slug>`; suggest that as
+  the default). When the prototype's stack template has `linkedRepos`,
+  default the target instead of asking: the prototype's
+  `pdk.json.importedFrom.repo` if present, else the single
+  `role: "product"` entry's path; with several product repos and no import
+  lineage, list them and ask which.
 
-Ask for whichever is missing.
+Ask for whichever is still missing.
 
 ## Step 1 — Pre-flight
 
