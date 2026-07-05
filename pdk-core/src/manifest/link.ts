@@ -11,8 +11,9 @@
  * conventions, dependency pins, and the default handoff target.
  */
 
-import { existsSync, readFileSync, readdirSync, statSync } from 'node:fs'
+import { cpSync, existsSync, mkdirSync, readFileSync, readdirSync, rmSync, statSync, writeFileSync } from 'node:fs'
 import { basename, join, relative, resolve } from 'node:path'
+import type { DesignSystemConfig } from './scaffold.js'
 
 export type RepoRole = 'product' | 'design-system'
 
@@ -196,4 +197,131 @@ export function inspectRepo(repoPath: string): RepoReport {
       .replace(/[^a-z0-9]+/g, '-')
       .replace(/^-|-$/g, ''),
   }
+}
+
+export interface LinkInput {
+  report: RepoReport
+  candidate: AppCandidate
+  role: RepoRole
+}
+
+export interface GenerateResult {
+  templateDir: string
+  chassis: string
+  warnings: string[]
+}
+
+const CHASSIS_EXCLUDES = new Set(['node_modules', 'dist', 'manifest', 'package-lock.json', '.git'])
+
+export function generateTemplate(opts: {
+  kitRoot: string
+  stackName: string
+  inputs: LinkInput[]
+}): GenerateResult {
+  const { kitRoot, stackName, inputs } = opts
+  const warnings: string[] = []
+
+  const ds = inputs.find((i) => i.role === 'design-system')
+  const product = inputs.find((i) => i.role === 'product')
+  const scanSource = ds ?? product        // spec merge rule: DS wins for scanning
+  const versionSource = product ?? ds     // spec merge rule: product wins for versions
+  if (!scanSource || !versionSource) {
+    throw new Error('generateTemplate needs at least one LinkInput.')
+  }
+
+  const framework = versionSource.candidate.framework ?? scanSource.candidate.framework
+  if (framework !== 'react' && framework !== 'vue') {
+    throw new Error(
+      `Linked repos must be React or Vue apps — detected '${framework ?? 'unknown'}'. ` +
+        `The kit's chassis templates cannot render other frameworks.`,
+    )
+  }
+  const chassis = framework === 'react' ? 'react-shadcn' : 'vue-shadcn'
+  const chassisDir = join(kitRoot, 'stack-templates', chassis)
+  if (!existsSync(chassisDir)) {
+    throw new Error(`Chassis template missing: ${chassisDir}`)
+  }
+  const templateDir = join(kitRoot, 'stack-templates', stackName)
+  if (existsSync(templateDir)) {
+    throw new Error(
+      `stack-templates/${stackName} already exists. Pick another name or remove it first.`,
+    )
+  }
+
+  // 1. Copy the chassis, minus generated/heavy bits.
+  cpSync(chassisDir, templateDir, {
+    recursive: true,
+    filter: (src) => !CHASSIS_EXCLUDES.has(basename(src)),
+  })
+
+  // 2. Vendored ui + tokens from the scan source (DS repo when present).
+  const scanAbs = join(scanSource.report.repoPath, scanSource.candidate.dir)
+  const dsConfig: DesignSystemConfig = { type: 'package-types' }
+  if (scanSource.candidate.vendoredUiDir) {
+    const targetUi = join(templateDir, 'src', 'components', 'ui')
+    rmSync(targetUi, { recursive: true, force: true })
+    cpSync(join(scanAbs, scanSource.candidate.vendoredUiDir), targetUi, { recursive: true })
+    dsConfig.type = 'local-cva'
+  } else if (scanSource.candidate.dsPackages.length > 0) {
+    dsConfig.packages = scanSource.candidate.dsPackages
+  } else {
+    warnings.push(
+      'No vendored components or design-system packages found — components.json will be empty until configured.',
+    )
+  }
+  dsConfig.iconPackages =
+    scanSource.candidate.iconPackages.length > 0
+      ? scanSource.candidate.iconPackages
+      : versionSource.candidate.iconPackages
+
+  const tokenSourceRel = scanSource.candidate.tokenFiles[0]
+  const chassisCss = join('src', 'assets', 'index.css')
+  if (tokenSourceRel) {
+    writeFileSync(
+      join(templateDir, 'src', 'assets', 'linked-tokens.css'),
+      readFileSync(join(scanAbs, tokenSourceRel), 'utf8'),
+    )
+    const cssPath = join(templateDir, chassisCss)
+    writeFileSync(cssPath, `@import './linked-tokens.css';\n` + readFileSync(cssPath, 'utf8'))
+    dsConfig.tokenFiles = ['src/assets/linked-tokens.css', chassisCss]
+  } else {
+    dsConfig.tokenFiles = [chassisCss]
+    warnings.push('No token file found in linked repos — using chassis tokens only.')
+  }
+
+  // 3. package.json: chassis plumbing + linked versions winning on overlap.
+  const chassisPkg = JSON.parse(readFileSync(join(chassisDir, 'package.json'), 'utf8'))
+  const linkedDeps = {
+    ...readJson(join(join(scanSource.report.repoPath, scanSource.candidate.dir), 'package.json'))
+      ?.dependencies,
+    ...readJson(join(join(versionSource.report.repoPath, versionSource.candidate.dir), 'package.json'))
+      ?.dependencies,
+  }
+  const dependencies: Record<string, string> = { ...chassisPkg.dependencies }
+  for (const [dep, version] of Object.entries(linkedDeps)) {
+    if (typeof version === 'string' && !version.startsWith('workspace:')) {
+      dependencies[dep] = version
+    }
+  }
+  writeFileSync(
+    join(templateDir, 'package.json'),
+    JSON.stringify(
+      { ...chassisPkg, name: `${stackName}-template`, dependencies },
+      null,
+      2,
+    ) + '\n',
+  )
+
+  // 4. pdk.json: keep PROTOTYPE_* placeholders, set identity + scan config.
+  const chassisPdk = JSON.parse(readFileSync(join(chassisDir, 'pdk.json'), 'utf8'))
+  writeFileSync(
+    join(templateDir, 'pdk.json'),
+    JSON.stringify(
+      { ...chassisPdk, framework, library: stackName, designSystem: dsConfig },
+      null,
+      2,
+    ) + '\n',
+  )
+
+  return { templateDir, chassis, warnings }
 }
