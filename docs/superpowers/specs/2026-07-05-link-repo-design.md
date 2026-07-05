@@ -1,8 +1,6 @@
 # /link-repo — connect the kit to an existing product codebase
 
-**Status: DRAFT — awaiting user review.** Written from the recommended
-options while the user was away; the four assumptions below need explicit
-confirmation before implementation planning.
+**Status: DRAFT — screen import confirmed in scope by user (2026-07-05).**
 
 ## Problem
 
@@ -17,11 +15,13 @@ builds a matching stack template + manifest automatically, learns the
 product's conventions from its real screens, and remembers the repo as the
 default handoff target.
 
-## Assumptions to confirm
+## Scope decisions (user-confirmed)
 
-1. **Link depth = design system + conventions.** The linked repo's screens
-   are *mined* to seed `patterns.md` / `rules.md`, not imported as
-   prototypes. (Screen→prototype import is a listed v2 extension.)
+1. **Link depth = design system + conventions + screens.** The linked repo's
+   screens seed `patterns.md` / `rules.md` at link time, and any individual
+   screen can be imported **on demand** as the starting point of a new
+   prototype (`/import-screen`, below). Screens run on fake data by design —
+   connecting real endpoints stays the developer's step, via /handoff.
 2. **Sync is explicit.** The link records path + commit SHA; `/sync-manifest`
    learns to refresh from the linked repo. No file watching.
 3. **The linked repo becomes the default `/handoff` target.**
@@ -38,9 +38,12 @@ default handoff target.
   only judgement calls (ambiguity, convention mining, curation confirmation).
   Matches the kit's standing decision that "skills are thin wrappers over
   vitest-covered TS."
-- **C. Full import incl. screens-as-prototypes** — biggest head start, but
-  extracting screens from a real app (routing, state, data wiring) is
-  fragile and framework-entangled. Deferred; the design leaves room for it.
+- **C. Bulk screen conversion at link time** — convert every screen into a
+  prototype up front. Rejected: screens are nodes in a dependency graph
+  (state stores, auth contexts, router hooks, buried data-fetching, feature
+  flags), so bulk extraction fails opaquely and at scale. Instead, screen
+  import ships as **on-demand extraction of one chosen screen** (see
+  `/import-screen`), which keeps failures small, visible, and per-screen.
 
 ## User experience
 
@@ -58,6 +61,9 @@ default handoff target.
    interview, the user reviews mined drafts — confirm / correct / delete.
 4. Done: the catalogue's New-prototype dialog now offers the linked stack;
    `/handoff` defaults to the linked repo.
+5. From then on, `/import-screen "timesheet approval"` starts a new
+   prototype from that real screen — running on structurally-true fake
+   data — instead of from a blank template.
 
 If detection is ambiguous (monorepo with several apps, multiple candidate
 DS packages, no recognisable system), the skill asks instead of guessing.
@@ -116,7 +122,50 @@ confirms them, at which point the marker is removed. `isStubMd()` in
 alongside `pdk:stub`, so unconfirmed drafts read as not-yet-curated
 everywhere the kit already checks.
 
-### 3. Touch-ups to existing pieces
+### 3. `.claude/skills/import-screen/SKILL.md` (new) — build off an existing screen
+
+`/import-screen <screen>` (a route, file path, or plain-English name —
+"the timesheet approval page") creates a new prototype whose starting point
+is a real screen from the linked repo. Conceptually it is **/handoff in
+reverse**, and it reuses the same seam.
+
+Flow:
+
+1. **Locate** the screen in the linked repo (route tables, pages/ dirs,
+   filename match). Ambiguous → list candidates and ask.
+2. **Scaffold** a fresh prototype from the linked stack template via the
+   existing catalogue create API (`pdk.json` records
+   `importedFrom: { screen, commit }` alongside remix-style lineage).
+3. **Extract with dependency triage.** Walk the screen's import graph and
+   classify every dependency:
+   - *design system* → already in the template; rewrite import paths
+   - *pure UI / presentational / utils* → copy into the prototype
+   - *data fetching, state stores, auth, feature flags, analytics, i18n,
+     router* → **sever**: replace with calls through `src/services/api.ts`
+     and props/local state
+4. **Generate the mock layer from real types.** The app's own TypeScript
+   types for the severed data become `services/types.ts`; fixtures are
+   fabricated to those shapes so the fake data is structurally true. Route
+   params, auth roles, and flag states become named fixture scenarios.
+5. **Validate honestly.** Build + render the prototype; then write the
+   stub report into `context.md`: what was severed, what behaviour may
+   differ from production (permissions, flags), what wasn't imported.
+   The Api interface built here is exactly what /handoff later turns into
+   the developer's endpoint checklist — fake data in, connect-the-endpoints
+   out, as designed.
+6. **Failure is a defined outcome**: if extraction can't produce a rendering
+   screen (unresolvable coupling), report why and offer the fallback —
+   rebuild the screen fresh from the manifest using the original as the
+   visual reference (`prototyping` skill with the screen's source attached
+   as context).
+
+No new pdk-core engine code is required for v1 of this skill: extraction is
+AI-judgement work by nature (the classification in step 3), backed by the
+existing scaffold/create APIs, service-seam convention, and validation
+skill. If recurring mechanical parts emerge (import-graph walking), they
+graduate into tested TS later, per the kit's standing decision.
+
+### 4. Touch-ups to existing pieces
 
 - `/handoff`: when the prototype's stack has `linkedRepo`, default the
   target to `linkedRepo.path` (+ suggested subdirectory) instead of asking.
@@ -147,10 +196,15 @@ everywhere the kit already checks.
   `syncLink` commit-drift behaviour.
 - Smoke: link a scratch repo end-to-end → template builds, manifest scans,
   a prototype scaffolds from the new stack and serves `/__pdk/manifest`.
+- Screen import (skill-driven, so exercised not unit-tested): a fixture app
+  with one deliberately-entangled screen (store + router + fetch hook);
+  `/import-screen` must produce a rendering prototype whose data flows only
+  through `src/services/`, with the severed pieces listed in `context.md`.
 
 ## Out of scope (v2 candidates)
 
-- Importing existing screens as remixable prototypes (Approach C).
+- Bulk conversion of all screens at link time (import stays per-screen,
+  on demand).
 - Live watching of the linked repo.
 - Multi-repo links (one kit ↔ several products) — the data model
   (`linkedRepo` per stack template) already permits it; the skill just
