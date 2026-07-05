@@ -230,7 +230,13 @@ export function listScreens(repoPath: string, appDir = '.'): ScreenEntry[] {
     for (const entry of readdirSync(dir)) {
       if (entry === 'node_modules' || entry.startsWith('.') || entry.startsWith('_')) continue
       const full = join(dir, entry)
-      if (statSync(full).isDirectory()) walkScreens(full, depth + 1)
+      let st
+      try {
+        st = statSync(full)
+      } catch {
+        continue // broken symlink or unreadable entry — skip, never crash the endpoint
+      }
+      if (st.isDirectory()) walkScreens(full, depth + 1)
       else if (SCREEN_FILE_RE.test(entry)) {
         screens.push({ file: relative(base, full), name: humaniseScreenName(entry) })
       }

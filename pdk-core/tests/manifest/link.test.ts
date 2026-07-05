@@ -1,5 +1,5 @@
 import { join } from 'node:path'
-import { cpSync, existsSync, mkdirSync, mkdtempSync, readFileSync, rmSync, writeFileSync } from 'node:fs'
+import { cpSync, existsSync, mkdirSync, mkdtempSync, readFileSync, rmSync, symlinkSync, writeFileSync } from 'node:fs'
 import { tmpdir } from 'node:os'
 import { describe, expect, it, afterEach } from 'vitest'
 import { inspectRepo, generateTemplate } from '../../src/manifest/link.js'
@@ -325,5 +325,18 @@ describe('listScreens', () => {
   it('respects appDir in a monorepo', () => {
     const screens = listScreens(join(FIXTURES, 'monorepo'), 'apps/web')
     expect(screens).toEqual([{ file: 'src/pages/Home.tsx', name: 'Home' }])
+  })
+
+  it('skips broken symlinks instead of throwing', () => {
+    const repo = mkdtempSync(join(tmpdir(), 'pdk-screens-'))
+    try {
+      mkdirSync(join(repo, 'src', 'pages'), { recursive: true })
+      writeFileSync(join(repo, 'package.json'), '{"name":"x"}')
+      writeFileSync(join(repo, 'src', 'pages', 'Home.tsx'), 'export default () => null')
+      symlinkSync(join(repo, 'nonexistent-target'), join(repo, 'src', 'pages', 'broken-link.tsx'))
+      expect(listScreens(repo)).toEqual([{ file: 'src/pages/Home.tsx', name: 'Home' }])
+    } finally {
+      rmSync(repo, { recursive: true, force: true })
+    }
   })
 })
