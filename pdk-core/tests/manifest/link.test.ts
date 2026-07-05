@@ -170,4 +170,13 @@ describe('generateTemplate', () => {
       generateTemplate({ kitRoot, stackName: 'x', inputs: [{ report, candidate, role: 'product' }] }),
     ).toThrow(/React or Vue/)
   })
+
+  it('refuses a stack name that is not a simple slug', () => {
+    kitRoot = makeKitRoot()
+    const report = inspectRepo(join(FIXTURES, 'vendored-app'))
+    const inputs = [{ report, candidate: report.candidates[0], role: 'product' as const }]
+    for (const bad of ['../escape', 'a/b', 'Foo Bar', '']) {
+      expect(() => generateTemplate({ kitRoot, stackName: bad, inputs })).toThrow(/stack name/i)
+    }
+  })
 })

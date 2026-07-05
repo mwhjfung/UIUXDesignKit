@@ -219,6 +219,11 @@ export function generateTemplate(opts: {
   inputs: LinkInput[]
 }): GenerateResult {
   const { kitRoot, stackName, inputs } = opts
+  if (!/^[a-z0-9][a-z0-9-]*$/.test(stackName)) {
+    throw new Error(
+      `Invalid stack name '${stackName}' — use a simple kebab-case slug (letters, digits, hyphens).`,
+    )
+  }
   const warnings: string[] = []
 
   const ds = inputs.find((i) => i.role === 'design-system')
