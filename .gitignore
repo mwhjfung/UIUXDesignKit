@@ -17,3 +17,5 @@ vite.config.js.map
 /*.png
 /*.jpg
 /*.jpeg
+# Catalogue request queue — per-device working state (order tickets)
+.pdk/
