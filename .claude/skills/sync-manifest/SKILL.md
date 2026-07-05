@@ -8,6 +8,13 @@ description: Detect design-system drift after a package upgrade and refresh the 
 Re-scans the design system and diffs against the current manifest. JSON files
 are regenerated; curated markdown is **never** edited automatically.
 
+When the stack's `pdk.json` has `linkedRepos`, sync first refreshes the
+template's copies from the linked repos (vendored ui, linked-tokens.css —
+see `syncLink` in `@pdk/core`) and reports per-repo commit drift and any
+missing repo paths before diffing the manifest. A missing linked repo is
+reported with its stored path — ask the user for the new location and
+update the entry rather than failing.
+
 ## Steps
 
 1. Run from the repo root:

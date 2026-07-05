@@ -13,6 +13,7 @@ import { existsSync, readFileSync } from 'node:fs'
 import { join, resolve } from 'node:path'
 import { pathToFileURL } from 'node:url'
 import { getManifest } from './read.js'
+import { linkedRepos, syncLink, type LinkSyncEntry } from './link.js'
 import type { ComponentEntry, ManifestMeta } from './schema/types.js'
 import { scaffoldManifest, stackConfig } from './scaffold.js'
 
@@ -32,6 +33,7 @@ export interface SyncReport {
   /** curated-MD file → names it mentions that no longer exist */
   staleReferences: Record<string, string[]>
   upToDate: boolean
+  linkSync?: LinkSyncEntry[]
 }
 
 function indexBy<T extends { name: string }>(items: T[]): Map<string, T> {
@@ -123,6 +125,11 @@ export async function syncManifest(
     )
   }
 
+  let linkSync: LinkSyncEntry[] | undefined
+  if (linkedRepos(templateDir).length > 0) {
+    linkSync = syncLink(templateDir, { dryRun: opts.dryRun })
+  }
+
   const installed = installedVersions(templateDir, meta.packages)
   const versionChanges: SyncReport['versionChanges'] = {}
   for (const [pkg, recorded] of Object.entries(meta.packages)) {
@@ -149,6 +156,7 @@ export async function syncManifest(
       icons: { added: 0, removed: 0 },
       staleReferences: {},
       upToDate: true,
+      linkSync,
     }
   }
 
@@ -161,6 +169,7 @@ export async function syncManifest(
       icons: { added: 0, removed: 0 },
       staleReferences: {},
       upToDate: Object.keys(versionChanges).length === 0,
+      linkSync,
     }
   }
 
@@ -203,6 +212,7 @@ export async function syncManifest(
       components.added.length === 0 &&
       components.removed.length === 0 &&
       Object.keys(components.changed).length === 0,
+    linkSync,
   }
 }
 

@@ -35,6 +35,12 @@ Chain: `design-advisory` (domain brief) → `prototyping` (build) →
 `/markup` (annotations → commits) and the Tweaker (variant changes → source
 patches) run against the live prototype.
 
+Linked codebases: `/link-repo <path>` connects a product or design-system
+repo (stack templates record it in pdk.json `linkedRepos`).
+`/import-screen <name>` starts a prototype from a linked product repo's
+real screen. Linking is read-only; prototypes stay mock-only — real
+endpoints are connected by developers after /handoff, never in the kit.
+
 ## The manifest is the source of truth
 
 Every stack template has `manifest/`:

@@ -130,6 +130,23 @@ automatic scan) and `/curate-manifest` (a ~30-minute guided interview that
 captures your team's patterns and rules — this is where the quality comes
 from). Full detail lives in `CLAUDE.md` and `docs/ai-working-rules.md`.
 
+## Already have a product? Point the kit at it
+
+If your company already has a codebase, you don't have to describe your
+design system to the kit — link it:
+
+- **Link your repos** — one command reads your product's code (and your
+  design-system repo, if it lives separately), learns every component,
+  colour, and icon you actually use, and studies your real screens to
+  learn your team's habits.
+- **Start from a real screen** — ask for "the timesheet approval page"
+  and the kit copies that screen into a prototype you can safely change.
+  The real data pipes are snipped and replaced with realistic pretend
+  data, so nothing you do can touch production.
+- **Hand it back** — when the redesign is approved, the handoff lands it
+  right back in the repo it came from, with the connect-these-endpoints
+  checklist for your developer.
+
 ## Frequently asked questions
 
 **Do I need to know how to code?**

@@ -18,6 +18,22 @@ What was tried, what felt right or wrong, and why it matters for the direction.
 
 ## 2026-07-05 — Michael Fung (with Claude)
 
+**Repo linking: roles, on-demand screen import, mock-only boundary**
+
+1. Linked repos carry a role — design-system repos win for scanning,
+   product repos win for version pins, screens, and handoff target.
+2. Screen import is per-screen on demand (/import-screen), never a bulk
+   conversion: extraction failures stay small and visible, and the
+   fallback (rebuild from manifest with the original as reference) is a
+   defined outcome.
+3. Prototypes are mock-only by design. The skills refuse to wire live
+   endpoints or credentials; connecting real plumbing is the developer's
+   post-handoff step. Reads/writes against production from a prototype
+   was assessed and rejected (secrets in prompts, PII in shared
+   prototypes, the prototype-vs-shipped boundary eroding).
+
+## 2026-07-05 — Michael Fung (with Claude)
+
 **PDK v2: the eight decisions behind the A–E build**
 
 1. **npm workspaces for pdk-core + catalogue only.** Stack templates and

@@ -1,0 +1,4 @@
+{
+  "name": "web",
+  "dependencies": { "react": "^18.3.0", "react-router-dom": "^6.22.0", "@acme/design-system": "workspace:*" }
+}

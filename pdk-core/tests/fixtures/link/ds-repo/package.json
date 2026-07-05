@@ -1,0 +1,6 @@
+{
+  "name": "@acme/design-system",
+  "version": "3.1.0",
+  "dependencies": { "class-variance-authority": "^0.7.0" },
+  "peerDependencies": { "react": "^18.0.0" }
+}
