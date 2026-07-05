@@ -1,0 +1,41 @@
+{
+  "components": [
+    {
+      "name": "Button",
+      "importPath": "@/components/ui/button",
+      "detect": {
+        "dataSlot": "button"
+      },
+      "props": [
+        {
+          "name": "variant",
+          "label": "Variant",
+          "type": "select",
+          "options": [
+            "default",
+            "destructive",
+            "outline",
+            "secondary",
+            "ghost",
+            "link"
+          ],
+          "default": "default"
+        },
+        {
+          "name": "size",
+          "label": "Size",
+          "type": "select",
+          "options": [
+            "default",
+            "xs",
+            "sm",
+            "lg",
+            "icon"
+          ],
+          "default": "default"
+        }
+      ],
+      "hasChildren": true
+    }
+  ]
+}

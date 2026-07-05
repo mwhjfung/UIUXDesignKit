@@ -1,0 +1,9 @@
+{
+  "pack": "@atlaskit/icon",
+  "icons": [
+    "IconNew",
+    "IconTile",
+    "SVG",
+    "Skeleton"
+  ]
+}

@@ -1,0 +1,8 @@
+{
+  "stack": "react-material",
+  "scaffoldedAt": "2026-07-05T00:47:54.275Z",
+  "packages": {
+    "@mui/material": "6.5.0",
+    "@mui/icons-material": "6.5.0"
+  }
+}

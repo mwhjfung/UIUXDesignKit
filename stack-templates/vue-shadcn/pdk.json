@@ -1,0 +1,11 @@
+{
+  "title": "PROTOTYPE_TITLE",
+  "slug": "PROTOTYPE_SLUG",
+  "description": "PROTOTYPE_DESCRIPTION",
+  "author": "PROTOTYPE_AUTHOR",
+  "status": "draft",
+  "framework": "vue",
+  "library": "shadcn-vue",
+  "defaultPort": "PROTOTYPE_PORT",
+  "tags": []
+}

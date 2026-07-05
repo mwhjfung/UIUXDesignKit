@@ -1,0 +1,709 @@
+{
+  "components": [
+    {
+      "name": "Badge",
+      "importPath": "@/components/ui/badge",
+      "detect": {
+        "dataSlot": "badge"
+      },
+      "props": [
+        {
+          "name": "variant",
+          "label": "Variant",
+          "type": "select",
+          "options": [
+            "default",
+            "secondary",
+            "destructive",
+            "outline",
+            "ghost",
+            "link"
+          ],
+          "default": "default"
+        }
+      ],
+      "hasChildren": true
+    },
+    {
+      "name": "Button",
+      "importPath": "@/components/ui/button",
+      "detect": {
+        "dataSlot": "button"
+      },
+      "props": [
+        {
+          "name": "variant",
+          "label": "Variant",
+          "type": "select",
+          "options": [
+            "default",
+            "destructive",
+            "outline",
+            "secondary",
+            "ghost",
+            "link"
+          ],
+          "default": "default"
+        },
+        {
+          "name": "size",
+          "label": "Size",
+          "type": "select",
+          "options": [
+            "default",
+            "xs",
+            "sm",
+            "lg",
+            "icon",
+            "icon-xs",
+            "icon-sm",
+            "icon-lg"
+          ],
+          "default": "default"
+        }
+      ],
+      "hasChildren": true
+    },
+    {
+      "name": "Card",
+      "importPath": "@/components/ui/card",
+      "detect": {
+        "dataSlot": "card"
+      },
+      "props": [],
+      "hasChildren": true
+    },
+    {
+      "name": "CardAction",
+      "importPath": "@/components/ui/card",
+      "detect": {
+        "dataSlot": "card-action"
+      },
+      "props": [],
+      "hasChildren": true
+    },
+    {
+      "name": "CardContent",
+      "importPath": "@/components/ui/card",
+      "detect": {
+        "dataSlot": "card-content"
+      },
+      "props": [],
+      "hasChildren": true
+    },
+    {
+      "name": "CardDescription",
+      "importPath": "@/components/ui/card",
+      "detect": {
+        "dataSlot": "card-description"
+      },
+      "props": [],
+      "hasChildren": true
+    },
+    {
+      "name": "CardFooter",
+      "importPath": "@/components/ui/card",
+      "detect": {
+        "dataSlot": "card-footer"
+      },
+      "props": [],
+      "hasChildren": true
+    },
+    {
+      "name": "CardHeader",
+      "importPath": "@/components/ui/card",
+      "detect": {
+        "dataSlot": "card-header"
+      },
+      "props": [],
+      "hasChildren": true
+    },
+    {
+      "name": "CardTitle",
+      "importPath": "@/components/ui/card",
+      "detect": {
+        "dataSlot": "card-title"
+      },
+      "props": [],
+      "hasChildren": true
+    },
+    {
+      "name": "Checkbox",
+      "importPath": "@/components/ui/checkbox",
+      "detect": {
+        "dataSlot": "checkbox"
+      },
+      "props": [],
+      "hasChildren": true
+    },
+    {
+      "name": "Dialog",
+      "importPath": "@/components/ui/dialog",
+      "detect": {
+        "dataSlot": "dialog"
+      },
+      "props": [],
+      "hasChildren": true
+    },
+    {
+      "name": "DialogClose",
+      "importPath": "@/components/ui/dialog",
+      "detect": {
+        "dataSlot": "dialog-close"
+      },
+      "props": [],
+      "hasChildren": true
+    },
+    {
+      "name": "DialogContent",
+      "importPath": "@/components/ui/dialog",
+      "detect": {
+        "dataSlot": "dialog-content"
+      },
+      "props": [],
+      "hasChildren": true
+    },
+    {
+      "name": "DialogDescription",
+      "importPath": "@/components/ui/dialog",
+      "detect": {
+        "dataSlot": "dialog-description"
+      },
+      "props": [],
+      "hasChildren": true
+    },
+    {
+      "name": "DialogFooter",
+      "importPath": "@/components/ui/dialog",
+      "detect": {
+        "dataSlot": "dialog-footer"
+      },
+      "props": [],
+      "hasChildren": true
+    },
+    {
+      "name": "DialogHeader",
+      "importPath": "@/components/ui/dialog",
+      "detect": {
+        "dataSlot": "dialog-header"
+      },
+      "props": [],
+      "hasChildren": true
+    },
+    {
+      "name": "DialogOverlay",
+      "importPath": "@/components/ui/dialog",
+      "detect": {
+        "dataSlot": "dialog-overlay"
+      },
+      "props": [],
+      "hasChildren": true
+    },
+    {
+      "name": "DialogPortal",
+      "importPath": "@/components/ui/dialog",
+      "detect": {
+        "dataSlot": "dialog-portal"
+      },
+      "props": [],
+      "hasChildren": true
+    },
+    {
+      "name": "DialogTitle",
+      "importPath": "@/components/ui/dialog",
+      "detect": {
+        "dataSlot": "dialog-title"
+      },
+      "props": [],
+      "hasChildren": true
+    },
+    {
+      "name": "DialogTrigger",
+      "importPath": "@/components/ui/dialog",
+      "detect": {
+        "dataSlot": "dialog-trigger"
+      },
+      "props": [],
+      "hasChildren": true
+    },
+    {
+      "name": "DropdownMenu",
+      "importPath": "@/components/ui/dropdown-menu",
+      "detect": {
+        "dataSlot": "dropdown-menu"
+      },
+      "props": [],
+      "hasChildren": true
+    },
+    {
+      "name": "DropdownMenuCheckboxItem",
+      "importPath": "@/components/ui/dropdown-menu",
+      "detect": {
+        "dataSlot": "dropdown-menu-checkbox-item"
+      },
+      "props": [],
+      "hasChildren": true
+    },
+    {
+      "name": "DropdownMenuContent",
+      "importPath": "@/components/ui/dropdown-menu",
+      "detect": {
+        "dataSlot": "dropdown-menu-content"
+      },
+      "props": [],
+      "hasChildren": true
+    },
+    {
+      "name": "DropdownMenuGroup",
+      "importPath": "@/components/ui/dropdown-menu",
+      "detect": {
+        "dataSlot": "dropdown-menu-group"
+      },
+      "props": [],
+      "hasChildren": true
+    },
+    {
+      "name": "DropdownMenuItem",
+      "importPath": "@/components/ui/dropdown-menu",
+      "detect": {
+        "dataSlot": "dropdown-menu-item"
+      },
+      "props": [],
+      "hasChildren": true
+    },
+    {
+      "name": "DropdownMenuLabel",
+      "importPath": "@/components/ui/dropdown-menu",
+      "detect": {
+        "dataSlot": "dropdown-menu-label"
+      },
+      "props": [],
+      "hasChildren": true
+    },
+    {
+      "name": "DropdownMenuPortal",
+      "importPath": "@/components/ui/dropdown-menu",
+      "detect": {
+        "dataSlot": "dropdown-menu-portal"
+      },
+      "props": [],
+      "hasChildren": true
+    },
+    {
+      "name": "DropdownMenuRadioGroup",
+      "importPath": "@/components/ui/dropdown-menu",
+      "detect": {
+        "dataSlot": "dropdown-menu-radio-group"
+      },
+      "props": [],
+      "hasChildren": true
+    },
+    {
+      "name": "DropdownMenuRadioItem",
+      "importPath": "@/components/ui/dropdown-menu",
+      "detect": {
+        "dataSlot": "dropdown-menu-radio-item"
+      },
+      "props": [],
+      "hasChildren": true
+    },
+    {
+      "name": "DropdownMenuSeparator",
+      "importPath": "@/components/ui/dropdown-menu",
+      "detect": {
+        "dataSlot": "dropdown-menu-separator"
+      },
+      "props": [],
+      "hasChildren": true
+    },
+    {
+      "name": "DropdownMenuShortcut",
+      "importPath": "@/components/ui/dropdown-menu",
+      "detect": {
+        "dataSlot": "dropdown-menu-shortcut"
+      },
+      "props": [],
+      "hasChildren": true
+    },
+    {
+      "name": "DropdownMenuSub",
+      "importPath": "@/components/ui/dropdown-menu",
+      "detect": {
+        "dataSlot": "dropdown-menu-sub"
+      },
+      "props": [],
+      "hasChildren": true
+    },
+    {
+      "name": "DropdownMenuSubContent",
+      "importPath": "@/components/ui/dropdown-menu",
+      "detect": {
+        "dataSlot": "dropdown-menu-sub-content"
+      },
+      "props": [],
+      "hasChildren": true
+    },
+    {
+      "name": "DropdownMenuSubTrigger",
+      "importPath": "@/components/ui/dropdown-menu",
+      "detect": {
+        "dataSlot": "dropdown-menu-sub-trigger"
+      },
+      "props": [],
+      "hasChildren": true
+    },
+    {
+      "name": "DropdownMenuTrigger",
+      "importPath": "@/components/ui/dropdown-menu",
+      "detect": {
+        "dataSlot": "dropdown-menu-trigger"
+      },
+      "props": [],
+      "hasChildren": true
+    },
+    {
+      "name": "Input",
+      "importPath": "@/components/ui/input",
+      "detect": {
+        "dataSlot": "input"
+      },
+      "props": [],
+      "hasChildren": true
+    },
+    {
+      "name": "Label",
+      "importPath": "@/components/ui/label",
+      "detect": {
+        "dataSlot": "label"
+      },
+      "props": [],
+      "hasChildren": true
+    },
+    {
+      "name": "Select",
+      "importPath": "@/components/ui/select",
+      "detect": {
+        "dataSlot": "select"
+      },
+      "props": [],
+      "hasChildren": true
+    },
+    {
+      "name": "SelectContent",
+      "importPath": "@/components/ui/select",
+      "detect": {
+        "dataSlot": "select-content"
+      },
+      "props": [],
+      "hasChildren": true
+    },
+    {
+      "name": "SelectGroup",
+      "importPath": "@/components/ui/select",
+      "detect": {
+        "dataSlot": "select-group"
+      },
+      "props": [],
+      "hasChildren": true
+    },
+    {
+      "name": "SelectItem",
+      "importPath": "@/components/ui/select",
+      "detect": {
+        "dataSlot": "select-item"
+      },
+      "props": [],
+      "hasChildren": true
+    },
+    {
+      "name": "SelectLabel",
+      "importPath": "@/components/ui/select",
+      "detect": {
+        "dataSlot": "select-label"
+      },
+      "props": [],
+      "hasChildren": true
+    },
+    {
+      "name": "SelectScrollDownButton",
+      "importPath": "@/components/ui/select",
+      "detect": {
+        "dataSlot": "select-scroll-down-button"
+      },
+      "props": [],
+      "hasChildren": true
+    },
+    {
+      "name": "SelectScrollUpButton",
+      "importPath": "@/components/ui/select",
+      "detect": {
+        "dataSlot": "select-scroll-up-button"
+      },
+      "props": [],
+      "hasChildren": true
+    },
+    {
+      "name": "SelectSeparator",
+      "importPath": "@/components/ui/select",
+      "detect": {
+        "dataSlot": "select-separator"
+      },
+      "props": [],
+      "hasChildren": true
+    },
+    {
+      "name": "SelectTrigger",
+      "importPath": "@/components/ui/select",
+      "detect": {
+        "dataSlot": "select-trigger"
+      },
+      "props": [],
+      "hasChildren": true
+    },
+    {
+      "name": "SelectValue",
+      "importPath": "@/components/ui/select",
+      "detect": {
+        "dataSlot": "select-value"
+      },
+      "props": [],
+      "hasChildren": true
+    },
+    {
+      "name": "Separator",
+      "importPath": "@/components/ui/separator",
+      "detect": {
+        "dataSlot": "separator"
+      },
+      "props": [],
+      "hasChildren": true
+    },
+    {
+      "name": "Sheet",
+      "importPath": "@/components/ui/sheet",
+      "detect": {
+        "dataSlot": "sheet"
+      },
+      "props": [],
+      "hasChildren": true
+    },
+    {
+      "name": "SheetClose",
+      "importPath": "@/components/ui/sheet",
+      "detect": {
+        "dataSlot": "sheet-close"
+      },
+      "props": [],
+      "hasChildren": true
+    },
+    {
+      "name": "SheetContent",
+      "importPath": "@/components/ui/sheet",
+      "detect": {
+        "dataSlot": "sheet-content"
+      },
+      "props": [],
+      "hasChildren": true
+    },
+    {
+      "name": "SheetDescription",
+      "importPath": "@/components/ui/sheet",
+      "detect": {
+        "dataSlot": "sheet-description"
+      },
+      "props": [],
+      "hasChildren": true
+    },
+    {
+      "name": "SheetFooter",
+      "importPath": "@/components/ui/sheet",
+      "detect": {
+        "dataSlot": "sheet-footer"
+      },
+      "props": [],
+      "hasChildren": true
+    },
+    {
+      "name": "SheetHeader",
+      "importPath": "@/components/ui/sheet",
+      "detect": {
+        "dataSlot": "sheet-header"
+      },
+      "props": [],
+      "hasChildren": true
+    },
+    {
+      "name": "SheetTitle",
+      "importPath": "@/components/ui/sheet",
+      "detect": {
+        "dataSlot": "sheet-title"
+      },
+      "props": [],
+      "hasChildren": true
+    },
+    {
+      "name": "SheetTrigger",
+      "importPath": "@/components/ui/sheet",
+      "detect": {
+        "dataSlot": "sheet-trigger"
+      },
+      "props": [],
+      "hasChildren": true
+    },
+    {
+      "name": "Table",
+      "importPath": "@/components/ui/table",
+      "detect": {
+        "dataSlot": "table"
+      },
+      "props": [],
+      "hasChildren": true
+    },
+    {
+      "name": "TableBody",
+      "importPath": "@/components/ui/table",
+      "detect": {
+        "dataSlot": "table-body"
+      },
+      "props": [],
+      "hasChildren": true
+    },
+    {
+      "name": "TableCaption",
+      "importPath": "@/components/ui/table",
+      "detect": {
+        "dataSlot": "table-caption"
+      },
+      "props": [],
+      "hasChildren": true
+    },
+    {
+      "name": "TableCell",
+      "importPath": "@/components/ui/table",
+      "detect": {
+        "dataSlot": "table-cell"
+      },
+      "props": [],
+      "hasChildren": true
+    },
+    {
+      "name": "TableFooter",
+      "importPath": "@/components/ui/table",
+      "detect": {
+        "dataSlot": "table-footer"
+      },
+      "props": [],
+      "hasChildren": true
+    },
+    {
+      "name": "TableHead",
+      "importPath": "@/components/ui/table",
+      "detect": {
+        "dataSlot": "table-head"
+      },
+      "props": [],
+      "hasChildren": true
+    },
+    {
+      "name": "TableHeader",
+      "importPath": "@/components/ui/table",
+      "detect": {
+        "dataSlot": "table-header"
+      },
+      "props": [],
+      "hasChildren": true
+    },
+    {
+      "name": "TableRow",
+      "importPath": "@/components/ui/table",
+      "detect": {
+        "dataSlot": "table-row"
+      },
+      "props": [],
+      "hasChildren": true
+    },
+    {
+      "name": "Tabs",
+      "importPath": "@/components/ui/tabs",
+      "detect": {
+        "dataSlot": "tabs"
+      },
+      "props": [],
+      "hasChildren": true
+    },
+    {
+      "name": "TabsContent",
+      "importPath": "@/components/ui/tabs",
+      "detect": {
+        "dataSlot": "tabs-content"
+      },
+      "props": [],
+      "hasChildren": true
+    },
+    {
+      "name": "TabsList",
+      "importPath": "@/components/ui/tabs",
+      "detect": {
+        "dataSlot": "tabs-list"
+      },
+      "props": [
+        {
+          "name": "variant",
+          "label": "Variant",
+          "type": "select",
+          "options": [
+            "default",
+            "line"
+          ],
+          "default": "default"
+        }
+      ],
+      "hasChildren": true
+    },
+    {
+      "name": "TabsTrigger",
+      "importPath": "@/components/ui/tabs",
+      "detect": {
+        "dataSlot": "tabs-trigger"
+      },
+      "props": [],
+      "hasChildren": true
+    },
+    {
+      "name": "Tooltip",
+      "importPath": "@/components/ui/tooltip",
+      "detect": {
+        "dataSlot": "tooltip"
+      },
+      "props": [],
+      "hasChildren": true
+    },
+    {
+      "name": "TooltipContent",
+      "importPath": "@/components/ui/tooltip",
+      "detect": {
+        "dataSlot": "tooltip-content"
+      },
+      "props": [],
+      "hasChildren": true
+    },
+    {
+      "name": "TooltipProvider",
+      "importPath": "@/components/ui/tooltip",
+      "detect": {
+        "dataSlot": "tooltip-provider"
+      },
+      "props": [],
+      "hasChildren": true
+    },
+    {
+      "name": "TooltipTrigger",
+      "importPath": "@/components/ui/tooltip",
+      "detect": {
+        "dataSlot": "tooltip-trigger"
+      },
+      "props": [],
+      "hasChildren": true
+    }
+  ]
+}

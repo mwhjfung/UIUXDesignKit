@@ -1,0 +1,62 @@
+[
+  {
+    "id": "t1",
+    "title": "Draft onboarding email sequence",
+    "status": "in-progress",
+    "priority": "high",
+    "assignee": "Priya Raman",
+    "project": "Activation",
+    "dueDate": "2026-07-18",
+    "createdAt": "2026-06-20"
+  },
+  {
+    "id": "t2",
+    "title": "Fix export timeout on large workspaces",
+    "status": "blocked",
+    "priority": "high",
+    "assignee": "Dan Okafor",
+    "project": "Platform",
+    "dueDate": "2026-07-10",
+    "createdAt": "2026-06-12"
+  },
+  {
+    "id": "t3",
+    "title": "Refresh empty-state illustrations",
+    "status": "todo",
+    "priority": "low",
+    "assignee": null,
+    "project": "Design system",
+    "dueDate": null,
+    "createdAt": "2026-06-28"
+  },
+  {
+    "id": "t4",
+    "title": "Instrument search result clicks",
+    "status": "done",
+    "priority": "medium",
+    "assignee": "Mei Chen",
+    "project": "Platform",
+    "dueDate": "2026-06-30",
+    "createdAt": "2026-06-05"
+  },
+  {
+    "id": "t5",
+    "title": "Interview five churned customers",
+    "status": "in-progress",
+    "priority": "medium",
+    "assignee": "Priya Raman",
+    "project": "Activation",
+    "dueDate": "2026-07-22",
+    "createdAt": "2026-06-25"
+  },
+  {
+    "id": "t6",
+    "title": "Migrate billing webhooks to v2",
+    "status": "todo",
+    "priority": "high",
+    "assignee": "Dan Okafor",
+    "project": "Platform",
+    "dueDate": "2026-08-01",
+    "createdAt": "2026-07-01"
+  }
+]

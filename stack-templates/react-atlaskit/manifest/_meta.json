@@ -1,0 +1,10 @@
+{
+  "stack": "react-atlaskit",
+  "scaffoldedAt": "2026-07-05T00:47:54.594Z",
+  "packages": {
+    "@atlaskit/button": "20.5.3",
+    "@atlaskit/heading": "3.1.0",
+    "@atlaskit/tokens": "4.9.1",
+    "@atlaskit/icon": "23.11.0"
+  }
+}

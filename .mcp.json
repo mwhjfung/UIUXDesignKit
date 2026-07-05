@@ -1,0 +1,8 @@
+{
+  "mcpServers": {
+    "markup": {
+      "command": "npx",
+      "args": ["tsx", "pdk-core/src/mcp/markup-bridge.ts"]
+    }
+  }
+}

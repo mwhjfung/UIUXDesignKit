@@ -1,0 +1,15 @@
+{
+  "hooks": {
+    "UserPromptSubmit": [
+      {
+        "matcher": "prototype|build a|create a screen|listing screen|detail screen|design a|mock ?up|wireframe",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "echo 'IMPORTANT REMINDERS FOR THIS REQUEST: (1) If this asks to BUILD or CREATE a prototype/screen, you MUST invoke the design-advisory skill via the Skill tool BEFORE doing anything else — do not scan files or start building; design-advisory invokes the prototyping skill itself. If it MODIFIES an existing prototype, read that prototype context.md then use the prototyping skill. (2) NEVER scan prototypes/ unless the user names a prototype. (3) The stack manifest (stack-templates/<stack>/manifest/) is the source of truth for components, variants, tokens, and icons.'"
+          }
+        ]
+      }
+    ]
+  }
+}

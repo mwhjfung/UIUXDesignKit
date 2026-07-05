@@ -1,0 +1,13 @@
+{
+  "title": "Example Tasks",
+  "slug": "example-tasks",
+  "description": "Worked example: a task-list screen with filters, status badges, and a detail sheet — built entirely from manifest components over the typed mock service layer.",
+  "author": "Fungy",
+  "status": "draft",
+  "framework": "react",
+  "library": "shadcn",
+  "defaultPort": 5171,
+  "tags": [],
+  "stack": "react-shadcn",
+  "created": "2026-07-05"
+}

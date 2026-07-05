@@ -1,0 +1,207 @@
+{
+  "components": [
+    {
+      "name": "Button",
+      "importPath": "@atlaskit/button",
+      "props": [
+        {
+          "name": "appearance",
+          "label": "Appearance",
+          "type": "select",
+          "options": [
+            "default",
+            "danger",
+            "link",
+            "primary",
+            "subtle",
+            "subtle-link",
+            "warning"
+          ]
+        },
+        {
+          "name": "autoFocus",
+          "label": "Auto focus",
+          "type": "boolean"
+        },
+        {
+          "name": "href",
+          "label": "Href",
+          "type": "string"
+        },
+        {
+          "name": "isDisabled",
+          "label": "Is disabled",
+          "type": "boolean"
+        },
+        {
+          "name": "isSelected",
+          "label": "Is selected",
+          "type": "boolean"
+        },
+        {
+          "name": "spacing",
+          "label": "Spacing",
+          "type": "select",
+          "options": [
+            "default",
+            "compact",
+            "none"
+          ]
+        },
+        {
+          "name": "shouldFitContainer",
+          "label": "Should fit container",
+          "type": "boolean"
+        },
+        {
+          "name": "testId",
+          "label": "Test id",
+          "type": "string"
+        },
+        {
+          "name": "interactionName",
+          "label": "Interaction name",
+          "type": "string"
+        }
+      ],
+      "hasChildren": true
+    },
+    {
+      "name": "ButtonGroup",
+      "importPath": "@atlaskit/button",
+      "props": [
+        {
+          "name": "testId",
+          "label": "Test id",
+          "type": "string"
+        },
+        {
+          "name": "label",
+          "label": "Label",
+          "type": "string"
+        },
+        {
+          "name": "titleId",
+          "label": "Title id",
+          "type": "string"
+        }
+      ],
+      "hasChildren": true
+    },
+    {
+      "name": "CustomThemeButton",
+      "importPath": "@atlaskit/button",
+      "props": [
+        {
+          "name": "isLoading",
+          "label": "Is loading",
+          "type": "boolean"
+        }
+      ],
+      "hasChildren": false
+    },
+    {
+      "name": "Heading",
+      "importPath": "@atlaskit/heading",
+      "props": [
+        {
+          "name": "size",
+          "label": "Size",
+          "type": "select",
+          "options": [
+            "xxlarge",
+            "xlarge",
+            "large",
+            "medium",
+            "small",
+            "xsmall",
+            "xxsmall"
+          ]
+        },
+        {
+          "name": "as",
+          "label": "As",
+          "type": "select",
+          "options": [
+            "h1",
+            "h2",
+            "h3",
+            "h4",
+            "h5",
+            "h6",
+            "div",
+            "span"
+          ]
+        },
+        {
+          "name": "color",
+          "label": "Color",
+          "type": "select",
+          "options": [
+            "color.text",
+            "color.text.inverse",
+            "color.text.warning.inverse"
+          ]
+        },
+        {
+          "name": "testId",
+          "label": "Test id",
+          "type": "string"
+        }
+      ],
+      "hasChildren": true
+    },
+    {
+      "name": "LoadingButton",
+      "importPath": "@atlaskit/button",
+      "props": [
+        {
+          "name": "isLoading",
+          "label": "Is loading",
+          "type": "boolean"
+        }
+      ],
+      "hasChildren": false
+    },
+    {
+      "name": "Theme",
+      "importPath": "@atlaskit/button",
+      "props": [
+        {
+          "name": "isLoading",
+          "label": "Is loading",
+          "type": "boolean"
+        },
+        {
+          "name": "state",
+          "label": "State",
+          "type": "select",
+          "options": [
+            "disabled",
+            "default",
+            "focusSelected",
+            "selected",
+            "active",
+            "hover",
+            "focus"
+          ]
+        },
+        {
+          "name": "iconIsOnlyChild",
+          "label": "Icon is only child",
+          "type": "boolean"
+        },
+        {
+          "name": "mode",
+          "label": "Mode",
+          "type": "select",
+          "options": [
+            "light",
+            "dark"
+          ]
+        }
+      ],
+      "hasChildren": false
+    }
+  ]
+}

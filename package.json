@@ -1,0 +1,20 @@
+{
+  "name": "@mwhjfung/uiux-design-kit",
+  "private": true,
+  "version": "2.0.0",
+  "type": "module",
+  "workspaces": [
+    "pdk-core",
+    "catalogue"
+  ],
+  "scripts": {
+    "dev": "npm run build -w @pdk/core && npm run dev -w @mwhjfung/pdk-catalogue",
+    "build:core": "npm run build -w @pdk/core",
+    "build:tools": "npm run build:tools -w @pdk/core",
+    "test": "npm test -w @pdk/core",
+    "test:smoke": "npm run test:smoke -w @pdk/core"
+  },
+  "engines": {
+    "node": ">=20"
+  }
+}

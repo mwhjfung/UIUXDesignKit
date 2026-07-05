@@ -1,0 +1,10 @@
+{
+  "stack": "vue-shadcn",
+  "scaffoldedAt": "2026-07-05T00:47:52.945Z",
+  "packages": {
+    "lucide-vue-next": "0.454.0",
+    "class-variance-authority": "0.7.1",
+    "reka-ui": "2.10.1",
+    "tailwindcss": "4.3.2"
+  }
+}

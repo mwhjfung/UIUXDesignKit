@@ -1,0 +1,57 @@
+@import "tailwindcss";
+
+/* Catalogue-only token layer. The catalogue's own visual language is kept
+   neutral on purpose — it's the meta-layer that hosts prototypes in many
+   different design systems, so it shouldn't lean into any one of them. */
+:root {
+  --background:           #ffffff;
+  --foreground:           #18181b;
+  --muted:                #f4f4f5;
+  --muted-foreground:     #71717a;
+  --border:               #e4e4e7;
+  --primary:              #18181b;
+  --primary-foreground:   #fafafa;
+  --accent:               #f4f4f5;
+  --accent-foreground:    #18181b;
+
+  --status-draft:         #71717a;
+  --status-experimental:  #d97706;
+  --status-validated:     #16a34a;
+  --status-merged:        #6366f1;
+  --status-archived:      #a1a1aa;
+}
+
+@theme inline {
+  --font-sans: 'Inter Variable', ui-sans-serif, system-ui, sans-serif;
+  --color-background:         var(--background);
+  --color-foreground:         var(--foreground);
+  --color-muted:              var(--muted);
+  --color-muted-foreground:   var(--muted-foreground);
+  --color-border:             var(--border);
+  --color-primary:            var(--primary);
+  --color-primary-foreground: var(--primary-foreground);
+  --color-accent:             var(--accent);
+  --color-accent-foreground:  var(--accent-foreground);
+}
+
+@layer base {
+  * {
+    @apply border-border;
+  }
+  body {
+    @apply bg-background text-foreground font-sans antialiased;
+    font-feature-settings: 'cv02', 'cv03', 'cv04', 'cv11';
+  }
+  code {
+    @apply font-mono text-[0.9em] bg-muted px-1.5 py-0.5 rounded;
+  }
+}
+
+.status-pill {
+  @apply inline-flex items-center rounded-full px-2 py-0.5 text-[10px] font-medium uppercase tracking-wide;
+}
+.status-pill[data-status="draft"]        { background: color-mix(in srgb, var(--status-draft) 12%, transparent);        color: var(--status-draft); }
+.status-pill[data-status="experimental"] { background: color-mix(in srgb, var(--status-experimental) 14%, transparent); color: var(--status-experimental); }
+.status-pill[data-status="validated"]    { background: color-mix(in srgb, var(--status-validated) 14%, transparent);    color: var(--status-validated); }
+.status-pill[data-status="merged"]       { background: color-mix(in srgb, var(--status-merged) 14%, transparent);       color: var(--status-merged); }
+.status-pill[data-status="archived"]     { background: color-mix(in srgb, var(--status-archived) 14%, transparent);     color: var(--status-archived); }

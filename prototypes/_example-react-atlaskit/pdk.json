@@ -1,0 +1,17 @@
+{
+  "title": "Example: React + Atlaskit",
+  "slug": "_example-react-atlaskit",
+  "description": "A bundled example prototype that proves the kit can host a React + Atlassian Design System project. This is NOT the base — it's a worked demo. Treat it as reference; don't build real work into it. Delete it freely once you have your own real-stack prototypes.",
+  "author": "ProductDesignKit",
+  "status": "experimental",
+  "framework": "react",
+  "library": "atlaskit",
+  "defaultPort": 5181,
+  "tags": [
+    "example",
+    "demo",
+    "react",
+    "atlaskit"
+  ],
+  "hidden": true
+}

@@ -1,0 +1,19 @@
+node_modules/
+dist/
+.DS_Store
+*.local
+.claude/settings.local.json
+.env
+.env.*
+!.env.example
+.playwright-mcp
+.worktrees/
+.merge-backups/
+# Build emit from vue-tsc / tsconfig.node.json
+vite.config.js
+vite.config.d.ts
+vite.config.js.map
+# Stray screenshots/debug captures dropped at repo root by playwright/etc.
+/*.png
+/*.jpg
+/*.jpeg
