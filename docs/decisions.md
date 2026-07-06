@@ -16,6 +16,21 @@ What was tried, what felt right or wrong, and why it matters for the direction.
 
 ---
 
+## 2026-07-06 — Michael Fung (with Claude)
+
+**Catalogue actions: order tickets, not typed commands**
+
+1. Buttons that need the AI (screen import, handoff) file order tickets
+   in a git-ignored, per-device queue (.pdk/requests.json) drained by
+   /orders — same pattern as Markup annotations. Copyable-command and
+   headless-Claude bridges were considered and rejected (friction /
+   invisible spend).
+2. Handover is two steps: "ready for dev" is a status flip a designer
+   owns; the handoff ticket exports to a committed handoff/<slug> branch
+   in the target repo and advances the status to "handed off".
+3. Queues are deliberately not shared between machines — collaboration
+   travels through git (prototypes + statuses), tickets stay personal.
+
 ## 2026-07-05 — Michael Fung (with Claude)
 
 **Repo linking: roles, on-demand screen import, mock-only boundary**

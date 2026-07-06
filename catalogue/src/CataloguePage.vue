@@ -1,10 +1,11 @@
 <script setup lang="ts">
 import { Plus, RefreshCw } from 'lucide-vue-next'
-import { computed, onMounted, ref } from 'vue'
+import { computed, onBeforeUnmount, onMounted, ref } from 'vue'
 import CreatePrototypeModal from './CreatePrototypeModal.vue'
+import HandoverModal from './HandoverModal.vue'
 import PrototypeCard from './PrototypeCard.vue'
 import RemixModal from './RemixModal.vue'
-import type { PrototypeInfo, StackInfo } from './types'
+import type { CatalogueRequest, PrototypeInfo, StackInfo } from './types'
 
 const prototypes = ref<PrototypeInfo[]>([])
 const stacks = ref<StackInfo[]>([])
@@ -13,6 +14,9 @@ const loading = ref(true)
 const error = ref('')
 const showCreate = ref(false)
 const remixSource = ref<PrototypeInfo | null>(null)
+const requests = ref<CatalogueRequest[]>([])
+const handoverSource = ref<PrototypeInfo | null>(null)
+let pollTimer: ReturnType<typeof setInterval> | null = null
 
 const sorted = computed(() =>
   [...prototypes.value].sort((a, b) => {
@@ -66,7 +70,57 @@ function onRemixed(): void {
   load()
 }
 
-onMounted(load)
+async function loadRequests(): Promise<void> {
+  try {
+    requests.value = (await (await fetch('/__api/requests')).json()).requests ?? []
+  } catch {
+    /* catalogue works without the queue */
+  }
+}
+
+const pendingImports = computed(() =>
+  requests.value.filter((r) => r.type === 'import-screen' && r.status !== 'done'),
+)
+
+function requestFor(folder: string): CatalogueRequest | undefined {
+  return [...requests.value]
+    .reverse()
+    .find((r) => r.type === 'handoff' && r.handoff?.slug === folder && r.status !== 'done')
+}
+
+async function setStatus(proto: PrototypeInfo, status: string): Promise<void> {
+  const res = await fetch('/__api/update-status', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ slug: proto.folder, status }),
+  })
+  if (res.ok) load()
+  else error.value = (await res.json()).error ?? 'Failed to update status.'
+}
+
+async function retryRequest(id: string): Promise<void> {
+  await fetch(`/__api/requests/${id}`, {
+    method: 'PATCH',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ status: 'pending' }),
+  })
+  loadRequests()
+}
+
+function onQueued(): void {
+  showCreate.value = false
+  handoverSource.value = null
+  loadRequests()
+}
+
+onMounted(() => {
+  load()
+  loadRequests()
+  pollTimer = setInterval(loadRequests, 5000)
+})
+onBeforeUnmount(() => {
+  if (pollTimer) clearInterval(pollTimer)
+})
 </script>
 
 <template>
@@ -99,6 +153,22 @@ onMounted(load)
     <main class="max-w-6xl mx-auto px-6 py-8">
       <p v-if="error" class="text-sm text-red-600 mb-4">{{ error }}</p>
 
+      <div v-if="pendingImports.length" class="mb-4 space-y-2">
+        <p
+          v-for="r in pendingImports"
+          :key="r.id"
+          class="text-xs rounded-md border px-3 py-2 flex items-center gap-2"
+          :class="r.status === 'failed' ? 'border-red-300 text-red-700' : 'border-border text-muted-foreground'"
+        >
+          <span v-if="r.status === 'pending'">
+            Import "{{ r.screen?.title }}" queued — run <code>/orders</code> in Claude Code
+          </span>
+          <span v-else-if="r.status === 'in-progress'">Importing "{{ r.screen?.title }}"…</span>
+          <span v-else>Import "{{ r.screen?.title }}" failed: {{ r.note ?? 'see Claude Code' }}</span>
+          <button v-if="r.status === 'failed'" class="ml-auto underline" @click="retryRequest(r.id)">Retry</button>
+        </p>
+      </div>
+
       <div v-if="loading" class="text-sm text-muted-foreground">Loading…</div>
 
       <div v-else-if="sorted.length === 0" class="text-center py-24">
@@ -119,7 +189,11 @@ onMounted(load)
           :key="proto.folder"
           :prototype="proto"
           :running="running[proto.folder] ?? false"
+          :request="requestFor(proto.folder)"
           @remix="remixSource = proto"
+          @handover="handoverSource = proto"
+          @status="(s: string) => setStatus(proto, s)"
+          @retry="retryRequest"
         />
       </div>
     </main>
@@ -129,12 +203,20 @@ onMounted(load)
       :stacks="stacks"
       @close="showCreate = false"
       @created="onCreated"
+      @queued="onQueued"
     />
     <RemixModal
       v-if="remixSource"
       :source="remixSource"
       @close="remixSource = null"
       @remixed="onRemixed"
+    />
+    <HandoverModal
+      v-if="handoverSource"
+      :prototype="handoverSource"
+      :stacks="stacks"
+      @close="handoverSource = null"
+      @queued="onQueued"
     />
   </div>
 </template>

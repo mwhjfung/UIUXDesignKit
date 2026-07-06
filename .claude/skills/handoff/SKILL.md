@@ -91,8 +91,22 @@ Run the target's own typecheck/build scripts if they exist. Report results
 honestly; fix import-path errors you caused, but **do not** half-fix
 pre-existing target issues — list them.
 
-## Step 6 — Finish
+## Step 6 — Land it on a branch
+
+After the export verifies (typecheck/build in the target), commit it so
+the developer picks it up inside their normal git workflow:
+
+1. `git -C <target> checkout -b handoff/<slug>` (if taken, suffix `-2`,
+   `-3`, …).
+2. `git -C <target> add` the exported files + `HANDOFF.md` +
+   `DESIGN-CONTEXT.md`, and commit:
+   `feat(handoff): <title> prototype — connect endpoints per HANDOFF.md`.
+3. Leave the target checked out on that branch and name it in your report
+   — "checked out branch handoff/<slug>; open a PR when the endpoints are
+   connected."
+
+## Step 7 — Finish
 
 Summarize files copied/skipped/adapted + verification result. Suggest the
-developer starts at HANDOFF.md. Offer to commit on a branch in the target
-(e.g. `handoff/<slug>`) — with the user's confirmation, never silently.
+developer starts at HANDOFF.md, and remind them of the branch name from the
+previous step.

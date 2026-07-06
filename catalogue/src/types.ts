@@ -19,4 +19,24 @@ export interface StackInfo {
   framework: string
   library: string
   hasManifest: boolean
+  productRepo?: { path: string; appDir: string }
+}
+
+export interface ScreenOption {
+  repoPath: string
+  appDir: string
+  file: string
+  name: string
+  stack: string
+}
+
+export interface CatalogueRequest {
+  id: string
+  type: 'import-screen' | 'handoff'
+  status: 'pending' | 'in-progress' | 'done' | 'failed'
+  createdAt: string
+  updatedAt: string
+  note?: string
+  screen?: { repoPath: string; appDir: string; file: string; title: string; stack: string }
+  handoff?: { slug: string; targetRepo: string; targetSubdir?: string }
 }

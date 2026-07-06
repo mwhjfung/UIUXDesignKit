@@ -10,6 +10,16 @@
           }
         ]
       }
+    ],
+    "SessionStart": [
+      {
+        "hooks": [
+          {
+            "type": "command",
+            "command": "node -e \"try{const fs=require('fs');if(fs.existsSync('.pdk/requests.json')){const q=JSON.parse(fs.readFileSync('.pdk/requests.json','utf8'));const n=(Array.isArray(q)?q:[]).filter(r=>r.status==='pending').length;if(n>0)console.log(n+' catalogue order(s) waiting - run /orders to process them.')}}catch(e){}\""
+          }
+        ]
+      }
     ]
   }
 }

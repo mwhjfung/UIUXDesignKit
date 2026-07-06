@@ -146,6 +146,11 @@ design system to the kit — link it:
 - **Hand it back** — when the redesign is approved, the handoff lands it
   right back in the repo it came from, with the connect-these-endpoints
   checklist for your developer.
+- **Click, don't type** — the gallery has buttons for all of this: start
+  from scratch or from a real screen, flip a prototype's status (draft →
+  ready for dev → handed off), and hand it to developers. Buttons file
+  "order tickets" that your AI assistant picks up — if it isn't already
+  running, it announces waiting orders the next time you open it.
 
 ## Frequently asked questions
 
