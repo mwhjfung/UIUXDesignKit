@@ -82,4 +82,11 @@ describe('updatePrototypeStatus', () => {
     writeFileSync(join(proto, 'pdk.json'), '{"slug":"tasks","status":"draft"}')
     expect(() => updatePrototypeStatus(root, 'tasks', 'shipped')).toThrow(/Invalid status/)
   })
+
+  it('rejects slugs that are not simple kebab-case (path traversal guard)', () => {
+    root = makeRoot()
+    for (const bad of ['../evil', 'a/b', '..', 'Foo Bar']) {
+      expect(() => updatePrototypeStatus(root, bad, 'draft')).toThrow(/Unknown prototype/)
+    }
+  })
 })

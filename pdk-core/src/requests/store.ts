@@ -104,6 +104,9 @@ export function updatePrototypeStatus(root: string, slug: string, status: string
   if (!(ALLOWED_STATUSES as readonly string[]).includes(status)) {
     throw new Error(`Invalid status '${status}'. Allowed: ${ALLOWED_STATUSES.join(', ')}.`)
   }
+  if (!/^[a-z0-9][a-z0-9-]*$/.test(slug)) {
+    throw new Error(`Unknown prototype '${slug}' — slugs are kebab-case.`)
+  }
   const pdkPath = join(root, 'prototypes', slug, 'pdk.json')
   if (!existsSync(pdkPath)) {
     throw new Error(`Unknown prototype '${slug}' (${pdkPath} not found).`)

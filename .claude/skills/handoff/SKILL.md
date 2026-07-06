@@ -91,7 +91,7 @@ Run the target's own typecheck/build scripts if they exist. Report results
 honestly; fix import-path errors you caused, but **do not** half-fix
 pre-existing target issues — list them.
 
-## Land it on a branch
+## Step 6 — Land it on a branch
 
 After the export verifies (typecheck/build in the target), commit it so
 the developer picks it up inside their normal git workflow:
@@ -105,7 +105,7 @@ the developer picks it up inside their normal git workflow:
    — "checked out branch handoff/<slug>; open a PR when the endpoints are
    connected."
 
-## Step 6 — Finish
+## Step 7 — Finish
 
 Summarize files copied/skipped/adapted + verification result. Suggest the
 developer starts at HANDOFF.md, and remind them of the branch name from the

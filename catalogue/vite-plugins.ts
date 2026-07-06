@@ -369,14 +369,30 @@ export function prototypesApi(): Plugin {
                 error: 'Request needs type import-screen (with screen) or handoff (with handoff).',
               })
             }
+            const checkPath =
+              body.type === 'import-screen'
+                ? join(body.screen.repoPath, body.screen.appDir ?? '.')
+                : body.handoff.targetRepo
+            if (!existsSync(checkPath)) {
+              return json(res, 422, {
+                error: `That path no longer exists on this machine: ${checkPath}. Re-link the repo or correct the path.`,
+              })
+            }
             return json(res, 201, {
-              request: addRequest(repoRoot, { type: body.type, screen: body.screen, handoff: body.handoff }),
+              request: addRequest(repoRoot, {
+                type: body.type,
+                screen: body.type === 'import-screen' ? body.screen : undefined,
+                handoff: body.type === 'handoff' ? body.handoff : undefined,
+              }),
             })
           }
           if (req.method === 'PATCH') {
             const id = (req.url ?? '').split('?')[0].replace(/^\//, '')
             if (!id) return json(res, 400, { error: 'PATCH /__api/requests/<id>' })
             const patch = JSON.parse(await readBody(req))
+            if (patch.status && !['pending', 'in-progress', 'done', 'failed'].includes(patch.status)) {
+              return json(res, 422, { error: `Invalid ticket status '${patch.status}'.` })
+            }
             try {
               return json(res, 200, {
                 request: updateRequest(repoRoot, id, { status: patch.status, note: patch.note }),
